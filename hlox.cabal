@@ -1,0 +1,56 @@
+cabal-version:      2.4
+name:               hlox
+version:            0.1.0.0
+
+-- A short (one-line) description of the package.
+-- synopsis:
+
+-- A longer description of the package.
+-- description:
+
+-- A URL where users can report bugs.
+-- bug-reports:
+
+-- The license under which the package is released.
+-- license:
+author:             Ridho Pratama
+maintainer:         ridho.pratama@go-jek.com
+
+-- A copyright notice.
+-- copyright:
+-- category:
+extra-source-files: CHANGELOG.md
+
+library
+    exposed-modules:
+        Language.Hlox.Parser
+        , Language.Hlox.Syntax
+        , Language.Hlox.Interpreter
+
+    -- Modules included in this library but not exported.
+    -- other-modules:
+
+    -- LANGUAGE extensions used by modules in this package.
+    -- other-extensions:
+    build-depends:    
+        base ^>=4.13.0.0
+        , megaparsec ^>= 9.0.1
+        , text ^>= 1.2.4.0
+        , mtl
+    hs-source-dirs:   src
+    default-language: Haskell2010
+
+executable hlox
+    main-is:          Main.hs
+
+    -- Modules included in this executable, other than Main.
+    -- other-modules:
+
+    -- LANGUAGE extensions used by modules in this package.
+    -- other-extensions:
+    build-depends:
+        base ^>=4.13.0.0,
+        hlox
+
+    hs-source-dirs:   app
+    default-language: Haskell2010
