@@ -14,10 +14,9 @@ import Language.Hlox.Runtime.Expr
 import Language.Hlox.Syntax
 import Text.Megaparsec (parse)
 
--- interpretLine :: String -> String -> ThrowsError Value
-interpretLine :: String -> String -> ThrowsError Text
+interpretLine :: Text -> Text -> ThrowsError Text
 interpretLine filename input =
-  let parseLine filename input = parse (sc >> parseStatement) filename (T.pack input)
+  let parseLine filename input = parse (sc >> parseStatement) (T.unpack filename) input
    in do
         case parseLine filename input of
           Left err -> throwError $ Parser err

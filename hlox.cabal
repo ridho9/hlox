@@ -28,6 +28,7 @@ library
         , Language.Hlox.Interpreter
         , Language.Hlox.Runtime.Error
         , Language.Hlox.Runtime.Expr
+        , Language.Hlox.Runtime.Env
 
     -- Modules included in this library but not exported.
     -- other-modules:
@@ -51,8 +52,9 @@ executable hlox
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
     build-depends:
-        base ^>=4.14.0.0,
-        hlox
+        base ^>=4.14.0.0
+        , text ^>= 1.2.4.0
+        , hlox
 
     hs-source-dirs:   app
     default-language: Haskell2010
