@@ -37,14 +37,10 @@ binaryOpList =
   ]
 
 binaryNotEq :: Value -> Value -> ThrowsError Value
-binaryNotEq (Number left) right = binarySameTypeOp Bool unpackNum (/=) (Number left) right
-binaryNotEq (String left) right = binarySameTypeOp Bool unpackStr (/=) (String left) right
-binaryNotEq left _ = throwError $ TypeMismatch "number or string" left
+binaryNotEq left right = return $ Bool $ left /= right
 
 binaryEq :: Value -> Value -> ThrowsError Value
-binaryEq (Number left) right = binarySameTypeOp Bool unpackNum (==) (Number left) right
-binaryEq (String left) right = binarySameTypeOp Bool unpackStr (==) (String left) right
-binaryEq left _ = throwError $ TypeMismatch "number or string" left
+binaryEq left right = return $ Bool $ left == right
 
 binaryLessEq :: Value -> Value -> ThrowsError Value
 binaryLessEq (Number left) right = binarySameTypeOp Bool unpackNum (<=) (Number left) right
