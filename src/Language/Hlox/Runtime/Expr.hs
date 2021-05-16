@@ -8,20 +8,21 @@ import Data.Functor ((<&>))
 import Data.Text (Text)
 import Data.Text qualified as T
 import Language.Hlox.Parser
+import Language.Hlox.Runtime.Env
 import Language.Hlox.Runtime.Error
 import Language.Hlox.Syntax
 import Text.Megaparsec
 
-evalExpr :: Expression -> ThrowsError Value
-evalExpr (Literal v) = return v
-evalExpr (Grouping v) = evalExpr v
-evalExpr (Unary Not e) = evalExpr e >>= unaryNot
-evalExpr (Unary Negate e) = evalExpr e >>= unaryNegate
-evalExpr (Binary leftE op rightE) = do
-  leftV <- evalExpr leftE
-  rightV <- evalExpr rightE
+evalExpr :: Env -> Expression -> IOThrowsError Value
+evalExpr env (Literal v) = return v
+evalExpr env (Grouping v) = evalExpr env v
+evalExpr env (Unary Not e) = evalExpr env e >>= (liftThrows . unaryNot)
+evalExpr env (Unary Negate e) = evalExpr env e >>= (liftThrows . unaryNegate)
+evalExpr env (Binary leftE op rightE) = do
+  leftV <- evalExpr env leftE
+  rightV <- evalExpr env rightE
   case lookup op binaryOpList of
-    Just opFunc -> opFunc leftV rightV
+    Just opFunc -> liftThrows $ opFunc leftV rightV
 
 binaryOpList =
   [ (Plus, binaryPlus)
