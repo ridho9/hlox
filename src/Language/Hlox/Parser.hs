@@ -12,9 +12,7 @@ import qualified Text.Megaparsec.Char.Lexer as L
 
 type Parser = Parsec Void Text
 
-readExpr input = case parse (sc >> parseExpression) "lisp" (T.pack input) of
-  Left err -> errorBundlePretty err
-  Right val -> show val
+type ParserError = ParseErrorBundle Text Void
 
 parseExpression :: Parser Expression
 parseExpression = parseEquality
@@ -86,7 +84,7 @@ parseGrouping = do
   symbol ")"
   return $ Grouping expr
 
-parseValue :: Parser Value
+-- seValue :: Parser Value
 parseValue =
   parseNumber
     <|> parseString
