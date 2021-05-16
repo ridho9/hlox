@@ -5,6 +5,11 @@ module Language.Hlox.Syntax where
 
 import Data.Text (Text)
 
+data Statement
+  = Expression Expression
+  | Print Expression
+  deriving (Show)
+
 data Expression
   = Literal Value
   | Grouping Expression
@@ -17,7 +22,7 @@ data Value
   | String Text
   | Bool Bool
   | Nil
-  deriving (Eq, Ord)
+  deriving (Eq)
 
 instance Show Value where show = showValue
 

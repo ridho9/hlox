@@ -14,6 +14,15 @@ type Parser = Parsec Void Text
 
 type ParserError = ParseErrorBundle Text Void
 
+parseStatement :: Parser Statement
+parseStatement = parsePrintStatement <|> parseExprStatement
+
+parsePrintStatement :: Parser Statement
+parsePrintStatement = Print <$> (symbol "print" *> parseExpression <* symbol ";")
+
+parseExprStatement :: Parser Statement
+parseExprStatement = Expression <$> (parseExpression <* symbol ";")
+
 parseExpression :: Parser Expression
 parseExpression = parseEquality
 

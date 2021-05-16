@@ -26,6 +26,8 @@ library
         Language.Hlox.Parser
         , Language.Hlox.Syntax
         , Language.Hlox.Interpreter
+        , Language.Hlox.Runtime.Error
+        , Language.Hlox.Runtime.Expr
 
     -- Modules included in this library but not exported.
     -- other-modules:
