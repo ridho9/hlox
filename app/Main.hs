@@ -1,30 +1,34 @@
 {-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Main where
 
-import Control.Monad.IO.Class
-import Data.Text
+import Control.Monad.Except (runExceptT)
 import Data.Text qualified as T
 import Language.Hlox.Interpreter
 import Language.Hlox.Runtime.Env
 import Language.Hlox.Runtime.Error
+import Language.Hlox.Syntax
 import System.IO (hFlush, stdout)
 
 tShow = T.pack . show
 
 runRepl :: IO ()
 runRepl =
-  runReplLine 1
+  do
+    env <- nullEnv
+    -- runExceptT (defineVar env "name" (String "ridho")) >>= \case
+    --   Left err -> print err
+    --   Right _ -> return ()
+    runReplLine env 1
   where
-    runReplLine :: Integer -> IO ()
-    runReplLine n = do
+    runReplLine :: Env -> Integer -> IO ()
+    runReplLine env n = do
       expr <- putStr (show n <> "> ") >> hFlush stdout >> getLine
-      env <- liftIO nullEnv
       fmap (putStrLn . T.unpack) $ runIOThrows $ interpretLine env ("repl-" <> tShow n) (T.pack expr)
-      runReplLine (n + 1)
+      runReplLine env (n + 1)
 
 main :: IO ()
 main = do
   runRepl
-  main

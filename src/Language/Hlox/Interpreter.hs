@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 
@@ -16,15 +17,18 @@ import Language.Hlox.Runtime.Stmt
 import Language.Hlox.Syntax
 import Text.Megaparsec (parse)
 
+parseLine :: Text -> Text -> ThrowsError Statement
+parseLine filename input = case parse (sc >> parseStatement) (T.unpack filename) input of
+  Left err -> throwError $ Parser err
+  Right stmt -> return stmt
+
 interpretLine :: Env -> Text -> Text -> IOThrowsError Text
-interpretLine env filename input =
-  do
-    case parseLine filename input of
-      Left err -> do
-        liftIO $ putStrLn . T.unpack <$> extractValue $ trapError $ throwError $ Parser err
-        return ""
-      Right stmt -> do
-        evalStmt env stmt
-        return ""
-  where
-    parseLine filename input = parse (sc >> parseStatement) (T.unpack filename) input
+interpretLine env filename input = case parseLine filename input of
+  Left err -> liftIO $ print err >> return ""
+  Right stmt -> do
+    liftIO
+      (runExceptT $ evalStmt env stmt)
+      >>= \case
+        Left err -> liftIO $ print err
+        Right a -> return ()
+    return ""

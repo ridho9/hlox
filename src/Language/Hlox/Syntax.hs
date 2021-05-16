@@ -15,6 +15,7 @@ data Expression
   | Grouping Expression
   | Unary UnaryOp Expression
   | Binary Expression BinaryOp Expression
+  | Variable Text
   deriving (Show)
 
 data Value

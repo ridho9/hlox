@@ -81,7 +81,14 @@ parseUnary =
     <|> parsePrimary
 
 parsePrimary :: Parser Expression
-parsePrimary = parseLiteral <|> parseGrouping
+parsePrimary = parseLiteral <|> parseGrouping <|> parseVariable
+
+parseVariable :: Parser Expression
+parseVariable =
+  Variable . T.pack <$> do
+    first <- letterChar
+    rest <- many (letterChar <|> digitChar)
+    return $ first : rest
 
 parseLiteral :: Parser Expression
 parseLiteral = Literal <$> parseValue
@@ -93,7 +100,7 @@ parseGrouping = do
   symbol ")"
   return $ Grouping expr
 
--- seValue :: Parser Value
+parseValue :: Parser Value
 parseValue =
   parseNumber
     <|> parseString

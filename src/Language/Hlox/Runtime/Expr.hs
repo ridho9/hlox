@@ -18,6 +18,7 @@ evalExpr env (Literal v) = return v
 evalExpr env (Grouping v) = evalExpr env v
 evalExpr env (Unary Not e) = evalExpr env e >>= (liftThrows . unaryNot)
 evalExpr env (Unary Negate e) = evalExpr env e >>= (liftThrows . unaryNegate)
+evalExpr env (Variable var) = getVar env var
 evalExpr env (Binary leftE op rightE) = do
   leftV <- evalExpr env leftE
   rightV <- evalExpr env rightE
