@@ -8,6 +8,7 @@ import Data.Text (Text)
 data Statement
   = Expression Expression
   | Print Expression
+  | Declaration Text (Maybe Expression)
   deriving (Show)
 
 data Expression

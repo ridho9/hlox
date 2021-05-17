@@ -14,8 +14,22 @@ type Parser = Parsec Void Text
 
 type ParserError = ParseErrorBundle Text Void
 
+parseProgramLine :: Parser Statement
+parseProgramLine = parseDeclaration
+
+parseDeclaration :: Parser Statement
+parseDeclaration = parseVarDeclStmt <|> parseStatement
+
 parseStatement :: Parser Statement
 parseStatement = parsePrintStatement <|> parseExprStatement
+
+parseVarDeclStmt :: Parser Statement
+parseVarDeclStmt = do
+  symbol "var"
+  ident <- parseIdentifier
+  value <- optional (symbol "=" >> parseExpression)
+  symbol ";"
+  return $ Declaration ident value
 
 parsePrintStatement :: Parser Statement
 parsePrintStatement = Print <$> (symbol "print" *> parseExpression <* symbol ";")
@@ -85,10 +99,13 @@ parsePrimary = parseLiteral <|> parseGrouping <|> parseVariable
 
 parseVariable :: Parser Expression
 parseVariable =
-  Variable . T.pack <$> do
-    first <- letterChar
-    rest <- many (letterChar <|> digitChar)
-    return $ first : rest
+  Variable <$> parseIdentifier
+
+parseIdentifier :: Parser Text
+parseIdentifier = lexeme $ do
+  first <- letterChar
+  rest <- many (letterChar <|> digitChar)
+  return $ T.pack $ first : rest
 
 parseLiteral :: Parser Expression
 parseLiteral = Literal <$> parseValue

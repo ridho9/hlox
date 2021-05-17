@@ -18,7 +18,7 @@ import Language.Hlox.Syntax
 import Text.Megaparsec (parse)
 
 parseLine :: Text -> Text -> ThrowsError Statement
-parseLine filename input = case parse (sc >> parseStatement) (T.unpack filename) input of
+parseLine filename input = case parse (sc >> parseProgramLine) (T.unpack filename) input of
   Left err -> throwError $ Parser err
   Right stmt -> return stmt
 
