@@ -14,6 +14,9 @@ type Parser = Parsec Void Text
 
 type ParserError = ParseErrorBundle Text Void
 
+parseProgram :: Parser [Statement]
+parseProgram = many parseProgramLine
+
 parseProgramLine :: Parser Statement
 parseProgramLine = parseDeclaration
 

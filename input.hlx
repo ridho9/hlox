@@ -1,0 +1,4 @@
+var a = "aaaaa";
+var b = "bbbb";
+var res = a + "    " + b;
+print res;

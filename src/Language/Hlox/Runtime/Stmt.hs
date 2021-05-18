@@ -11,6 +11,9 @@ import Language.Hlox.Runtime.Error
 import Language.Hlox.Runtime.Expr
 import Language.Hlox.Syntax
 
+evalStmts :: Traversable t => Env -> t Statement -> IOThrowsError (t Value)
+evalStmts env = mapM (evalStmt env)
+
 evalStmt :: Env -> Statement -> IOThrowsError Value
 evalStmt env (Expression expr) = evalExpr env expr
 evalStmt env (Print expr) = do

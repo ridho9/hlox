@@ -7,6 +7,7 @@
 module Language.Hlox.Interpreter where
 
 import Control.Monad.Except
+import Data.Functor
 import Data.Text
 import Data.Text qualified as T
 import Language.Hlox.Parser
@@ -15,20 +16,22 @@ import Language.Hlox.Runtime.Error
 import Language.Hlox.Runtime.Expr
 import Language.Hlox.Runtime.Stmt
 import Language.Hlox.Syntax
-import Text.Megaparsec (parse)
+import Text.Megaparsec
 
-parseLine :: Text -> Text -> ThrowsError Statement
-parseLine filename input = case parse (sc >> parseProgramLine) (T.unpack filename) input of
+parseHlox :: Parser a -> Text -> Text -> ThrowsError a
+parseHlox parser filename input = case parse (sc >> parser) (T.unpack filename) input of
   Left err -> throwError $ Parser err
   Right stmt -> return stmt
 
 interpretLine :: Env -> Text -> Text -> IOThrowsError Text
-interpretLine env filename input = case parseLine filename input of
-  Left err -> liftIO $ print err >> return ""
-  Right stmt -> do
-    liftIO
-      (runExceptT $ evalStmt env stmt)
-      >>= \case
-        Left err -> liftIO $ print err
-        Right a -> return ()
-    return ""
+interpretLine = interpret parseProgramLine evalStmt
+
+interpretFile :: Env -> Text -> IOThrowsError Text
+interpretFile env filename = do
+  content <- liftIO (T.pack <$> readFile (T.unpack filename))
+  interpret parseProgram evalStmts env filename content
+
+interpret parser evaluator env filename filetext = do
+  program <- liftThrows $ parseHlox parser filename filetext
+  evaluator env program
+  return ""
