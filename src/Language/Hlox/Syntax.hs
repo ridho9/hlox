@@ -4,6 +4,7 @@
 module Language.Hlox.Syntax where
 
 import Data.Text (Text)
+import qualified Data.Text as T
 
 data Statement
   = Expression Expression
@@ -26,11 +27,11 @@ data Value
   | Nil
   deriving (Eq)
 
-instance Show Value where show = showValue
+instance Show Value where show = T.unpack . showValue
 
-showValue :: Value -> String
-showValue (Number v) = show v
-showValue (String v) = show v
+showValue :: Value -> Text
+showValue (Number v) = T.pack $ show v
+showValue (String v) = T.pack $ show v
 showValue (Bool True) = "true"
 showValue (Bool False) = "false"
 showValue Nil = "nil"

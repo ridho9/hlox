@@ -27,14 +27,17 @@ getVar envRef var = do
 setVar :: Env -> Text -> Value -> IOThrowsError Value
 setVar envRef name value = do
   env <- liftIO $ readIORef envRef
-  maybe (throwError $ UnboundVar "Getting undefined variable" name) (liftIO . flip writeIORef value) (lookup name env)
+  maybe
+    (throwError $ UnboundVar "Getting undefined variable" name)
+    (liftIO . flip writeIORef value)
+    (lookup name env)
   return value
 
 defineVar :: Env -> Text -> Value -> IOThrowsError Value
 defineVar envRef var value = do
   alreadyDefined <- liftIO $ isBound envRef var
   if alreadyDefined
-    then setVar envRef var value >> return value
+    then setVar envRef var value
     else liftIO $ do
       valueRef <- newIORef value
       env <- readIORef envRef
