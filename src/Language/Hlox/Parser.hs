@@ -2,6 +2,8 @@
 
 module Language.Hlox.Parser where
 
+import Data.Functor
+import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Void
@@ -24,10 +26,11 @@ parseDeclaration :: Parser Statement
 parseDeclaration = parseVarDeclStmt <|> parseStatement
 
 parseVarDeclStmt :: Parser Statement
-parseVarDeclStmt = do
+parseVarDeclStmt = parseVarDeclStmtBody <* symbol ";"
+
+parseVarDeclStmtBody = do
   ident <- symbol "var" *> parseIdentifier
   value <- optional (symbol "=" >> parseExpression)
-  symbol ";"
   return $ Declaration ident value
 
 parseStatement :: Parser Statement
@@ -35,8 +38,23 @@ parseStatement =
   parseIfStatement
     <|> parsePrintStatement
     <|> parseWhileStatement
+    <|> parseForStatement
     <|> parseExprStatement
     <|> parseBlockStatement
+
+parseForStatement :: Parser Statement
+parseForStatement = do
+  symbol "for" *> symbol "("
+  initializer <- optional (parseVarDeclStmtBody <|> (Expression <$> parseExpression)) <* symbol ";"
+  condition <- (parseExpression <|> return (Literal $ Bool True)) <* symbol ";"
+  increment <- (parseExpression <|> return (Literal $ Bool True)) <* symbol ")"
+  body <- parseStatement
+
+  return $
+    Block
+      [ fromMaybe (Expression $ Literal Nil) initializer
+      , While condition $ Block [body, Expression increment]
+      ]
 
 parseWhileStatement :: Parser Statement
 parseWhileStatement = do
@@ -54,7 +72,7 @@ parsePrintStatement :: Parser Statement
 parsePrintStatement = Print <$> (symbol "print" *> parseExpression <* symbol ";")
 
 parseExprStatement :: Parser Statement
-parseExprStatement = Expression <$> (parseExpression <* symbol ";")
+parseExprStatement = (Expression <$> parseExpression) <* symbol ";"
 
 parseBlockStatement :: Parser Statement
 parseBlockStatement = do

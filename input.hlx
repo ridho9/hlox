@@ -1,5 +1,8 @@
-var n = 0;
-while (n < 5) {
-    n = n + 1;
-    print n;
+var a = 0;
+var temp;
+
+for (var b = 1; a < 10000; b = temp + b) {
+  print a;
+  temp = a;
+  a = b;
 }
