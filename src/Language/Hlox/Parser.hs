@@ -41,7 +41,17 @@ parseExprStatement :: Parser Statement
 parseExprStatement = Expression <$> (parseExpression <* symbol ";")
 
 parseExpression :: Parser Expression
-parseExpression = parseEquality
+parseExpression = parseAssignment
+
+parseAssignment :: Parser Expression
+parseAssignment =
+  try
+    ( do
+        ident <- parseIdentifier
+        symbol "="
+        Assignment ident <$> parseAssignment
+    )
+    <|> parseEquality
 
 parseEquality :: Parser Expression
 parseEquality = do

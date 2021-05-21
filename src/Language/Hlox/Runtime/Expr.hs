@@ -24,6 +24,9 @@ evalExpr env (Binary leftE op rightE) = do
   rightV <- evalExpr env rightE
   case lookup op binaryOpList of
     Just opFunc -> liftThrows $ opFunc leftV rightV
+evalExpr env (Assignment name expr) = do
+  val <- evalExpr env expr
+  setVar env name val
 
 binaryOpList =
   [ (Plus, binaryPlus)

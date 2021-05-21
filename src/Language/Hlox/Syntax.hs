@@ -18,6 +18,7 @@ data Expression
   | Unary UnaryOp Expression
   | Binary Expression BinaryOp Expression
   | Variable Text
+  | Assignment Text Expression
   deriving (Show)
 
 data Value
