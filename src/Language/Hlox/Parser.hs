@@ -34,12 +34,18 @@ parseStatement :: Parser Statement
 parseStatement =
   parseIfStatement
     <|> parsePrintStatement
+    <|> parseWhileStatement
     <|> parseExprStatement
     <|> parseBlockStatement
 
+parseWhileStatement :: Parser Statement
+parseWhileStatement = do
+  cond <- symbol "while" *> symbol "(" *> parseExpression <* symbol ")"
+  While cond <$> parseStatement
+
 parseIfStatement :: Parser Statement
 parseIfStatement = do
-  cond <- symbol "if" *> symbol ")" *> parseExpression <* symbol ")"
+  cond <- symbol "if" *> symbol "(" *> parseExpression <* symbol ")"
   ifTrue <- parseStatement
   ifFalse <- optional (symbol "else" *> parseStatement)
   return $ If cond ifTrue ifFalse

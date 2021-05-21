@@ -12,6 +12,7 @@ data Statement
   | Declaration Text (Maybe Expression)
   | Block [Statement]
   | If Expression Statement (Maybe Statement)
+  | While Expression Statement
   deriving (Show)
 
 data Expression

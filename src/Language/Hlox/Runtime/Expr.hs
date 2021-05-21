@@ -29,12 +29,12 @@ evalExpr env (Assignment name expr) = do
   setVar env name val
 evalExpr env (Logical leftE And rightE) = do
   leftV <- evalExpr env leftE
-  if valueTruty leftV
+  if valueTruthy leftV
     then evalExpr env rightE
     else return leftV
 evalExpr env (Logical leftE Or rightE) = do
   leftV <- evalExpr env leftE
-  if valueTruty leftV
+  if valueTruthy leftV
     then return leftV
     else evalExpr env rightE
 
@@ -105,12 +105,12 @@ unaryNegate :: Value -> ThrowsError Value
 unaryNegate v = unpackNum v <&> (Number . negate)
 
 unaryNot :: Value -> ThrowsError Value
-unaryNot v = case valueTruty v of v -> return $ Bool $ not v
+unaryNot v = case valueTruthy v of v -> return $ Bool $ not v
 
-valueTruty :: Value -> Bool
-valueTruty Nil = False
-valueTruty (Bool v) = v
-valueTruty _ = True
+valueTruthy :: Value -> Bool
+valueTruthy Nil = False
+valueTruthy (Bool v) = v
+valueTruthy _ = True
 
 type Unpacker a = Value -> ThrowsError a
 

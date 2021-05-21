@@ -37,8 +37,15 @@ evalStmt env (Block statements) = do
     l -> last l
 evalStmt env (If condition ifTrue ifFalse) = do
   condVal <- evalExpr env condition
-  if valueTruty condVal
+  if valueTruthy condVal
     then evalStmt env ifTrue
     else case ifFalse of
       Just s -> evalStmt env s
       Nothing -> return Nil
+evalStmt env (While condition statement) = do
+  condV <- evalExpr env condition
+  if valueTruthy condV
+    then do
+      evalStmt env statement
+      evalStmt env (While condition statement)
+    else return Nil
