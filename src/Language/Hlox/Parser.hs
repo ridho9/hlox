@@ -23,9 +23,6 @@ parseProgramLine = parseDeclaration
 parseDeclaration :: Parser Statement
 parseDeclaration = parseVarDeclStmt <|> parseStatement
 
-parseStatement :: Parser Statement
-parseStatement = parsePrintStatement <|> parseExprStatement <|> parseBlockStatement
-
 parseVarDeclStmt :: Parser Statement
 parseVarDeclStmt = do
   symbol "var"
@@ -33,6 +30,19 @@ parseVarDeclStmt = do
   value <- optional (symbol "=" >> parseExpression)
   symbol ";"
   return $ Declaration ident value
+
+parseStatement :: Parser Statement
+parseStatement = parseIfStatement <|> parsePrintStatement <|> parseExprStatement <|> parseBlockStatement
+
+parseIfStatement :: Parser Statement
+parseIfStatement = do
+  symbol "if"
+  symbol "("
+  cond <- parseExpression
+  symbol ")"
+  ifTrue <- parseStatement
+  ifFalse <- optional (symbol "else" *> parseStatement)
+  return $ If cond ifTrue ifFalse
 
 parsePrintStatement :: Parser Statement
 parsePrintStatement = Print <$> (symbol "print" *> parseExpression <* symbol ";")

@@ -11,6 +11,7 @@ data Statement
   | Print Expression
   | Declaration Text (Maybe Expression)
   | Block [Statement]
+  | If Expression Statement (Maybe Statement)
   deriving (Show)
 
 data Expression

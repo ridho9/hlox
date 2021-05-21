@@ -95,12 +95,12 @@ unaryNegate :: Value -> ThrowsError Value
 unaryNegate v = unpackNum v <&> (Number . negate)
 
 unaryNot :: Value -> ThrowsError Value
-unaryNot v = case valueTruty v of Bool v -> return $ Bool $ not v
+unaryNot v = case valueTruty v of v -> return $ Bool $ not v
 
-valueTruty :: Value -> Value
-valueTruty Nil = Bool False
-valueTruty (Bool v) = Bool v
-valueTruty _ = Bool True
+valueTruty :: Value -> Bool
+valueTruty Nil = False
+valueTruty (Bool v) = v
+valueTruty _ = True
 
 type Unpacker a = Value -> ThrowsError a
 

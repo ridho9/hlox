@@ -35,3 +35,10 @@ evalStmt env (Block statements) = do
   return $ case res of
     [] -> Nil
     l -> last l
+evalStmt env (If condition ifTrue ifFalse) = do
+  condVal <- evalExpr env condition
+  if valueTruty condVal
+    then evalStmt env ifTrue
+    else case ifFalse of
+      Just s -> evalStmt env s
+      Nothing -> return Nil
