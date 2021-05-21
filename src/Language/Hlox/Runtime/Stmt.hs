@@ -29,3 +29,9 @@ evalStmt env (Declaration name maybeVal) =
       Just expr -> evalExpr env expr
       Nothing -> return Nil
     defineVar env name val
+evalStmt env (Block statements) = do
+  blockEnv <- liftIO $ bindVars env []
+  res <- evalStmts blockEnv statements
+  return $ case res of
+    [] -> Nil
+    l -> last l

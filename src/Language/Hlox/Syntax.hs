@@ -10,6 +10,7 @@ data Statement
   = Expression Expression
   | Print Expression
   | Declaration Text (Maybe Expression)
+  | Block [Statement]
   deriving (Show)
 
 data Expression

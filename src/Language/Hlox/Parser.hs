@@ -24,7 +24,7 @@ parseDeclaration :: Parser Statement
 parseDeclaration = parseVarDeclStmt <|> parseStatement
 
 parseStatement :: Parser Statement
-parseStatement = parsePrintStatement <|> parseExprStatement
+parseStatement = parsePrintStatement <|> parseExprStatement <|> parseBlockStatement
 
 parseVarDeclStmt :: Parser Statement
 parseVarDeclStmt = do
@@ -39,6 +39,13 @@ parsePrintStatement = Print <$> (symbol "print" *> parseExpression <* symbol ";"
 
 parseExprStatement :: Parser Statement
 parseExprStatement = Expression <$> (parseExpression <* symbol ";")
+
+parseBlockStatement :: Parser Statement
+parseBlockStatement = do
+  symbol "{"
+  statements <- many parseDeclaration
+  symbol "}"
+  return $ Block statements
 
 parseExpression :: Parser Expression
 parseExpression = parseAssignment
