@@ -25,21 +25,21 @@ parseDeclaration = parseVarDeclStmt <|> parseStatement
 
 parseVarDeclStmt :: Parser Statement
 parseVarDeclStmt = do
-  symbol "var"
-  ident <- parseIdentifier
+  ident <- symbol "var" *> parseIdentifier
   value <- optional (symbol "=" >> parseExpression)
   symbol ";"
   return $ Declaration ident value
 
 parseStatement :: Parser Statement
-parseStatement = parseIfStatement <|> parsePrintStatement <|> parseExprStatement <|> parseBlockStatement
+parseStatement =
+  parseIfStatement
+    <|> parsePrintStatement
+    <|> parseExprStatement
+    <|> parseBlockStatement
 
 parseIfStatement :: Parser Statement
 parseIfStatement = do
-  symbol "if"
-  symbol "("
-  cond <- parseExpression
-  symbol ")"
+  cond <- symbol "if" *> symbol ")" *> parseExpression <* symbol ")"
   ifTrue <- parseStatement
   ifFalse <- optional (symbol "else" *> parseStatement)
   return $ If cond ifTrue ifFalse
@@ -68,7 +68,29 @@ parseAssignment =
         symbol "="
         Assignment ident <$> parseAssignment
     )
-    <|> parseEquality
+    <|> parseLogicOr
+
+parseLogicOr :: Parser Expression
+parseLogicOr = do
+  left <- parseLogicAnd
+  rest <- many $ do
+    op <-
+      parseIdentMany
+        [("or", Or)]
+    right <- parseLogicAnd
+    return (op, right)
+  return $ foldl (\left (op, right) -> Logical left op right) left rest
+
+parseLogicAnd :: Parser Expression
+parseLogicAnd = do
+  left <- parseEquality
+  rest <- many $ do
+    op <-
+      parseIdentMany
+        [("and", And)]
+    right <- parseEquality
+    return (op, right)
+  return $ foldl (\left (op, right) -> Logical left op right) left rest
 
 parseEquality :: Parser Expression
 parseEquality = do

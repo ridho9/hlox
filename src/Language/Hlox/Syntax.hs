@@ -21,6 +21,7 @@ data Expression
   | Binary Expression BinaryOp Expression
   | Variable Text
   | Assignment Text Expression
+  | Logical Expression LogicalOp Expression
   deriving (Show)
 
 data Value
@@ -58,4 +59,9 @@ data BinaryOp
   | LessEq
   | Eq
   | NotEq
+  deriving (Show, Eq)
+
+data LogicalOp
+  = And
+  | Or
   deriving (Show, Eq)

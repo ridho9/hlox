@@ -1,6 +1,2 @@
-if(false) {
-    print "true";
-} else {
-    print "false";
-}
-print "end";
+print "hi" or 2; // "hi".
+print nil or "yes"; // "yes".

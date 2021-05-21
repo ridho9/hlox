@@ -27,6 +27,16 @@ evalExpr env (Binary leftE op rightE) = do
 evalExpr env (Assignment name expr) = do
   val <- evalExpr env expr
   setVar env name val
+evalExpr env (Logical leftE And rightE) = do
+  leftV <- evalExpr env leftE
+  if valueTruty leftV
+    then evalExpr env rightE
+    else return leftV
+evalExpr env (Logical leftE Or rightE) = do
+  leftV <- evalExpr env leftE
+  if valueTruty leftV
+    then return leftV
+    else evalExpr env rightE
 
 binaryOpList =
   [ (Plus, binaryPlus)
