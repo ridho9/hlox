@@ -13,6 +13,7 @@ data Statement
   | Block [Statement]
   | If Expression Statement (Maybe Statement)
   | While Expression Statement
+  | Break
   deriving (Show)
 
 data Expression

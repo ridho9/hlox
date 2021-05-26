@@ -38,6 +38,7 @@ parseStatement =
   parseIfStatement
     <|> parsePrintStatement
     <|> parseWhileStatement
+    <|> ((symbol "break" *> symbol ";") $> Break)
     <|> parseForStatement
     <|> parseExprStatement
     <|> parseBlockStatement
@@ -75,11 +76,7 @@ parseExprStatement :: Parser Statement
 parseExprStatement = (Expression <$> parseExpression) <* symbol ";"
 
 parseBlockStatement :: Parser Statement
-parseBlockStatement = do
-  symbol "{"
-  statements <- many parseDeclaration
-  symbol "}"
-  return $ Block statements
+parseBlockStatement = Block <$> (symbol "{" *> many parseDeclaration <* symbol "}")
 
 parseExpression :: Parser Expression
 parseExpression = parseAssignment

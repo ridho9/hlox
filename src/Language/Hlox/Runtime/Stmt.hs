@@ -3,18 +3,20 @@
 
 module Language.Hlox.Runtime.Stmt where
 
+import Control.Monad.Except (MonadError (throwError), runExceptT)
 import Control.Monad.IO.Class
 import Data.Functor
 import Data.Text qualified as T
 import Language.Hlox.Runtime.Env
 import Language.Hlox.Runtime.Error
-import Language.Hlox.Runtime.Expr
+import Language.Hlox.Runtime.Expr (evalExpr, valueTruthy)
 import Language.Hlox.Syntax
 
 evalStmts :: Traversable t => Env -> t Statement -> IOThrowsError (t Value)
 evalStmts env = mapM (evalStmt env)
 
 evalStmt :: Env -> Statement -> IOThrowsError Value
+evalStmt env Break = liftThrows $ throwError $ LoopBreak "called outside of a loop"
 evalStmt env (Expression expr) = evalExpr env expr
 evalStmt env (Print expr) = do
   val <- evalExpr env expr
@@ -42,10 +44,14 @@ evalStmt env (If condition ifTrue ifFalse) = do
     else case ifFalse of
       Just s -> evalStmt env s
       Nothing -> return Nil
-evalStmt env (While condition statement) = do
+evalStmt env (While condition body) = do
   condV <- evalExpr env condition
   if valueTruthy condV
     then do
-      evalStmt env statement
-      evalStmt env (While condition statement)
+      bodyRes <- liftIO $ runExceptT $ evalStmt env body
+      case bodyRes of
+        Right val -> evalStmt env (While condition body)
+        Left err -> case err of
+          LoopBreak _ -> return Nil
+          err -> throwError err
     else return Nil

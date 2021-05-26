@@ -26,6 +26,7 @@ data Error
   = Parser ParserError
   | TypeMismatch Text Value
   | UnboundVar Text Text
+  | LoopBreak Text
 
 instance Show Error where
   show = T.unpack . showError
@@ -34,6 +35,7 @@ showError :: Error -> Text
 showError (UnboundVar message varname) = message <> ": " <> varname
 showError (TypeMismatch expected found) = "Invalid type: expected " <> expected <> ", found " <> T.pack (show found)
 showError (Parser err) = "Parser error: " <> T.pack (errorBundlePretty err)
+showError (LoopBreak message) = "Break error: " <> message
 
 trapError action = catchError action (return . (T.pack . show))
 
