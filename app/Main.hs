@@ -10,6 +10,7 @@ import Language.Hlox.Interpreter
 import Language.Hlox.Runtime.Env
 import Language.Hlox.Runtime.Error
 import Language.Hlox.Syntax
+import Language.Hlox.Value (Value)
 import System.Environment
 import System.IO (hFlush, stdout)
 
@@ -23,14 +24,14 @@ main = do
     [] -> runRepl env
     filename : _ -> runFile filename env
 
-runFile :: String -> Env -> IO ()
+runFile :: String -> Env Value -> IO ()
 runFile filename env = do
   res <- runExceptT $ interpretFile env (T.pack filename)
   case res of
     Left err -> print err
     Right _ -> return ()
 
-runRepl :: Env -> IO ()
+runRepl :: Env Value -> IO ()
 runRepl env =
   do
     -- runExceptT (defineVar env "name" (String "ridho")) >>= \case
@@ -38,7 +39,7 @@ runRepl env =
     --   Right _ -> return ()
     runReplLine env 1
   where
-    runReplLine :: Env -> Integer -> IO ()
+    runReplLine :: Env Value -> Integer -> IO ()
     runReplLine env n = do
       expr <- putStr (show n <> "> ") >> hFlush stdout >> getLine
       runIOThrows (interpretLine env ("repl-" <> tShow n) (T.pack expr))

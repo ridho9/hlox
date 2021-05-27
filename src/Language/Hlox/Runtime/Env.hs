@@ -9,22 +9,21 @@ import Data.IORef
 import Data.Maybe (isJust)
 import Data.Text (Text)
 import Language.Hlox.Runtime.Error
-import Language.Hlox.Value
 
-type Env = IORef [(Text, IORef Value)]
+type Env a = IORef [(Text, IORef a)]
 
-nullEnv :: IO Env
+nullEnv :: IO (Env a)
 nullEnv = newIORef []
 
-isBound :: Env -> Text -> IO Bool
+isBound :: Env a -> Text -> IO Bool
 isBound envRef var = readIORef envRef <&> (isJust . lookup var)
 
-getVar :: Env -> Text -> IOThrowsError Value
+getVar :: Env a -> Text -> IOThrowsError a
 getVar envRef var = do
   env <- liftIO $ readIORef envRef
   maybe (throwError $ UnboundVar "Getting undefined variable" var) (liftIO . readIORef) (lookup var env)
 
-setVar :: Env -> Text -> Value -> IOThrowsError Value
+setVar :: Env a -> Text -> a -> IOThrowsError a
 setVar envRef name value = do
   env <- liftIO $ readIORef envRef
   maybe
@@ -33,7 +32,7 @@ setVar envRef name value = do
     (lookup name env)
   return value
 
-defineVar :: Env -> Text -> Value -> IOThrowsError Value
+defineVar :: Env a -> Text -> a -> IOThrowsError a
 defineVar envRef var value = do
   liftIO $ do
     valueRef <- newIORef value
@@ -41,7 +40,7 @@ defineVar envRef var value = do
     writeIORef envRef ((var, valueRef) : env)
     return value
 
-bindVars :: Env -> [(Text, Value)] -> IO Env
+bindVars :: Env a -> [(Text, a)] -> IO (Env a)
 bindVars envRef bindings = readIORef envRef >>= extendEnv bindings >>= newIORef
   where
     extendEnv bindings env = fmap (++ env) (mapM addBinding bindings)

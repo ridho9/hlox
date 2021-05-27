@@ -16,6 +16,7 @@ import Language.Hlox.Runtime.Error
 import Language.Hlox.Runtime.Expr
 import Language.Hlox.Runtime.Stmt
 import Language.Hlox.Syntax
+import Language.Hlox.Value
 import Text.Megaparsec
 
 parseHlox :: Parser a -> Text -> Text -> ThrowsError a
@@ -23,10 +24,10 @@ parseHlox parser filename input = case parse (sc >> parser) (T.unpack filename) 
   Left err -> throwError $ Parser err
   Right stmt -> return stmt
 
-interpretLine :: Env -> Text -> Text -> IOThrowsError Text
+interpretLine :: Env Value -> Text -> Text -> IOThrowsError Text
 interpretLine = interpret parseProgramLine evalStmt
 
-interpretFile :: Env -> Text -> IOThrowsError Text
+interpretFile :: Env Value -> Text -> IOThrowsError Text
 interpretFile env filename = do
   content <- liftIO (T.pack <$> readFile (T.unpack filename))
   interpret parseProgram evalStmts env filename content
