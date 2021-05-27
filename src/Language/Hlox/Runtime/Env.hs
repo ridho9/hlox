@@ -9,7 +9,7 @@ import Data.IORef
 import Data.Maybe (isJust)
 import Data.Text (Text)
 import Language.Hlox.Runtime.Error
-import Language.Hlox.Syntax (Value)
+import Language.Hlox.Value
 
 type Env = IORef [(Text, IORef Value)]
 

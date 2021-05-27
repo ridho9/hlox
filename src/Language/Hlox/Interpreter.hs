@@ -33,5 +33,6 @@ interpretFile env filename = do
 
 interpret parser evaluator env filename filetext = do
   program <- liftThrows $ parseHlox parser filename filetext
+  -- liftIO $ print program
   evaluator env program
   return ""

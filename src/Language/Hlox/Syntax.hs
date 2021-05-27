@@ -5,6 +5,7 @@ module Language.Hlox.Syntax where
 
 import Data.Text (Text)
 import qualified Data.Text as T
+import Language.Hlox.Value (Value)
 
 data Statement
   = Expression Expression
@@ -24,29 +25,8 @@ data Expression
   | Variable Text
   | Assignment Text Expression
   | Logical Expression LogicalOp Expression
+  | Call Expression [Expression]
   deriving (Show)
-
-data Value
-  = Number Double
-  | String Text
-  | Bool Bool
-  | Nil
-  deriving (Eq)
-
-instance Show Value where show = T.unpack . showValue
-
-showValue :: Value -> Text
-showValue (Number v) = T.pack $ show v
-showValue (String v) = T.pack $ show v
-showValue (Bool True) = "true"
-showValue (Bool False) = "false"
-showValue Nil = "nil"
-
-valueType :: Value -> Text
-valueType (Number _) = "number"
-valueType (String _) = "string"
-valueType (Bool _) = "boolean"
-valueType Nil = "nil"
 
 data UnaryOp = Not | Negate deriving (Show, Eq)
 

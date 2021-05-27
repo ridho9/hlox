@@ -2,12 +2,14 @@
 
 module Language.Hlox.Parser where
 
+import Data.Foldable (foldl')
 import Data.Functor
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Void
 import Language.Hlox.Syntax
+import Language.Hlox.Value
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import qualified Text.Megaparsec.Char.Lexer as L
@@ -100,7 +102,7 @@ parseLogicOr = do
         [("or", Or)]
     right <- parseLogicAnd
     return (op, right)
-  return $ foldl (\left (op, right) -> Logical left op right) left rest
+  return $ foldl' (\left (op, right) -> Logical left op right) left rest
 
 parseLogicAnd :: Parser Expression
 parseLogicAnd = do
@@ -111,7 +113,7 @@ parseLogicAnd = do
         [("and", And)]
     right <- parseEquality
     return (op, right)
-  return $ foldl (\left (op, right) -> Logical left op right) left rest
+  return $ foldl' (\left (op, right) -> Logical left op right) left rest
 
 parseEquality :: Parser Expression
 parseEquality = do
@@ -124,7 +126,7 @@ parseEquality = do
         ]
     right <- parseCompare
     return (op, right)
-  return $ foldl (\left (op, right) -> Binary left op right) left rest
+  return $ foldl' (\left (op, right) -> Binary left op right) left rest
 
 parseCompare :: Parser Expression
 parseCompare = do
@@ -139,7 +141,7 @@ parseCompare = do
         ]
     right <- parseTerm
     return (op, right)
-  return $ foldl (\left (op, right) -> Binary left op right) left rest
+  return $ foldl' (\left (op, right) -> Binary left op right) left rest
 
 parseTerm :: Parser Expression
 parseTerm = do
@@ -148,7 +150,7 @@ parseTerm = do
     op <- parseIdentMany [("+", Plus), ("-", Minus)]
     right <- parseFactor
     return (op, right)
-  return $ foldl (\left (op, right) -> Binary left op right) left rest
+  return $ foldl' (\left (op, right) -> Binary left op right) left rest
 
 parseFactor :: Parser Expression
 parseFactor = do
@@ -157,15 +159,28 @@ parseFactor = do
     op <- parseIdentMany [("/", Divide), ("*", Multiply)]
     right <- parseUnary
     return (op, right)
-  return $ foldl (\left (op, right) -> Binary left op right) left rest
+  return $ foldl' (\left (op, right) -> Binary left op right) left rest
 
 parseUnary :: Parser Expression
 parseUnary =
   ( do
-      op <- parseIdentMany [("!", Not), ("-", Negate)]
+      op <- parseIdentMany [("!", Not), ("-", Negate)] <?> "unary operator"
       Unary op <$> parseUnary
   )
-    <|> parsePrimary
+    <|> parseCall
+
+parseCall :: Parser Expression
+parseCall = do
+  prim <- parsePrimary
+  calls <- many parseCallArgs
+  case calls of
+    [] -> return prim
+    exprs -> return $ foldl' Call prim calls
+
+parseCallArgs :: Parser [Expression]
+parseCallArgs = do
+  args <- symbol "(" *> sepEndBy parseExpression (symbol ",") <* symbol ")"
+  if length args < 256 then return args else fail "can't have call with more than 255 arguments"
 
 parsePrimary :: Parser Expression
 parsePrimary = parseLiteral <|> parseGrouping <|> parseVariable
@@ -203,6 +218,7 @@ parseBool =
     <$> ( (symbol "true" >> return True)
             <|> (symbol "false" >> return False)
         )
+    <?> "boolean"
 
 parseNil :: Parser Value
 parseNil = Nil <$ symbol "nil"

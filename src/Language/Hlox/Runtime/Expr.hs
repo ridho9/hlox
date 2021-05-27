@@ -11,6 +11,7 @@ import Language.Hlox.Parser
 import Language.Hlox.Runtime.Env
 import Language.Hlox.Runtime.Error
 import Language.Hlox.Syntax
+import Language.Hlox.Value
 import Text.Megaparsec
 
 evalExpr :: Env -> Expression -> IOThrowsError Value

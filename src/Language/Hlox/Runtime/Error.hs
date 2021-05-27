@@ -8,7 +8,7 @@ import Data.Functor ((<&>))
 import Data.Text (Text)
 import Data.Text qualified as T
 import Language.Hlox.Parser (ParserError)
-import Language.Hlox.Syntax (Value)
+import Language.Hlox.Value
 import Text.Megaparsec (errorBundlePretty)
 
 type ThrowsError = Either Error
