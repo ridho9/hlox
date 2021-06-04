@@ -1,0 +1,60 @@
+name: hlox
+version: 0.1.0.0
+github: "ridho9/hlox"
+license: BSD3
+author: "Ridho Pratama"
+maintainer: "p.ridho@yahoo.co.id"
+copyright: "2021 Ridho Pratama"
+
+extra-source-files:
+  - README.md
+  - CHANGELOG.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description: Please see the README on GitHub at <https://github.com/githubuser/hox#readme>
+
+default-extensions:
+  - OverloadedStrings
+  - ImportQualifiedPost
+  # - EmptyCase
+  # - FlexibleContexts
+  # - FlexibleInstances
+  # - InstanceSigs
+  # - MultiParamTypeClasses
+  # - LambdaCase
+
+dependencies:
+  - base >= 4.7 && < 5
+  - text
+  - megaparsec
+  - mtl
+
+library:
+  source-dirs: src
+
+executables:
+  hlox:
+    main: Main.hs
+    source-dirs: app
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+    dependencies:
+      - hlox
+# tests:
+#   hox-test:
+#     main: Spec.hs
+#     source-dirs: test
+#     ghc-options:
+#       - -threaded
+#       - -rtsopts
+#       - -with-rtsopts=-N
+#     dependencies:
+#       - hox
