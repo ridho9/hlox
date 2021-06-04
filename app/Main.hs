@@ -4,13 +4,13 @@
 
 module Main where
 
-import Control.Monad.Except (runExceptT)
+import Control.Monad.Except (MonadIO (liftIO), runExceptT)
 import Data.Text qualified as T
 import Language.Hlox.Interpreter
 import Language.Hlox.Runtime.Env
 import Language.Hlox.Runtime.Error
 import Language.Hlox.Syntax
-import Language.Hlox.Value (Value)
+import Language.Hlox.Value (Value (String))
 import System.Environment
 import System.IO (hFlush, stdout)
 
@@ -20,27 +20,29 @@ main :: IO ()
 main = do
   args <- getArgs
   env <- nullEnv
-  case args of
+
+  -- definingGlobals
+  -- _ <- runExceptT $ defineVar env "name" (String "ridho")
+
+  res <- runExceptT $ case args of
     [] -> runRepl env
     filename : _ -> runFile filename env
-
-runFile :: String -> Env Value -> IO ()
-runFile filename env = do
-  res <- runExceptT $ interpretFile env (T.pack filename)
   case res of
     Left err -> print err
-    Right _ -> return ()
+    _ -> return ()
 
-runRepl :: Env Value -> IO ()
+runFile :: String -> Env Value -> IOThrowsError ()
+runFile filename env = do
+  res <- interpretFile env (T.pack filename)
+  return ()
+
+runRepl :: Env Value -> IOThrowsError ()
 runRepl env =
   do
-    -- runExceptT (defineVar env "name" (String "ridho")) >>= \case
-    --   Left err -> print err
-    --   Right _ -> return ()
     runReplLine env 1
   where
-    runReplLine :: Env Value -> Integer -> IO ()
+    runReplLine :: Env Value -> Integer -> IOThrowsError ()
     runReplLine env n = do
-      expr <- putStr (show n <> "> ") >> hFlush stdout >> getLine
-      runIOThrows (interpretLine env ("repl-" <> tShow n) (T.pack expr))
+      expr <- liftIO $ putStr (show n <> "> ") >> hFlush stdout >> getLine
+      interpretLine env ("repl-" <> tShow n) (T.pack expr)
       runReplLine env (n + 1)

@@ -7,8 +7,10 @@ import Control.Monad.Except
 import Data.Functor ((<&>))
 import Data.Text (Text)
 import Data.Text qualified as T
-import Language.Hlox.Parser (ParserError)
-import Text.Megaparsec (errorBundlePretty)
+-- import Language.Hlox.Parser (ParserError)
+
+import Data.Void (Void)
+import Text.Megaparsec
 
 type ThrowsError = Either Error
 
@@ -22,7 +24,7 @@ runIOThrows :: IOThrowsError Text -> IO Text
 runIOThrows action = runExceptT (trapError action) <&> extractValue
 
 data Error
-  = Parser ParserError
+  = Parser (ParseErrorBundle Text Void)
   | TypeMismatch Text Text
   | UnboundVar Text Text
   | LoopBreak Text

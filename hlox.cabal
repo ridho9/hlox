@@ -37,6 +37,9 @@ library
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
+    default-extensions:
+        OverloadedStrings
+
     build-depends:    
         base ^>=4.14.0.0
         , megaparsec ^>= 9.0.1
