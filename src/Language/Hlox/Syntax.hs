@@ -4,7 +4,7 @@
 module Language.Hlox.Syntax where
 
 import Data.Text (Text)
-import qualified Data.Text as T
+import Data.Text qualified as T
 import Language.Hlox.Value (Value)
 
 data Statement
@@ -21,10 +21,10 @@ data Expression
   = Literal Value
   | Grouping Expression
   | Unary UnaryOp Expression
-  | Binary Expression BinaryOp Expression
+  | Binary BinaryOp Expression Expression
   | Variable Text
   | Assignment Text Expression
-  | Logical Expression LogicalOp Expression
+  | Logical LogicalOp Expression Expression
   | Call Expression [Expression]
   deriving (Show)
 

@@ -2,17 +2,18 @@
 
 module Language.Hlox.Parser where
 
+import Control.Monad.Combinators.Expr
 import Data.Foldable (foldl')
 import Data.Functor
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
-import qualified Data.Text as T
+import Data.Text qualified as T
 import Data.Void
 import Language.Hlox.Syntax
 import Language.Hlox.Value
 import Text.Megaparsec
 import Text.Megaparsec.Char
-import qualified Text.Megaparsec.Char.Lexer as L
+import Text.Megaparsec.Char.Lexer qualified as L
 
 type Parser = Parsec Void Text
 
@@ -91,83 +92,10 @@ parseAssignment =
         symbol "="
         Assignment ident <$> parseAssignment
     )
-    <|> parseLogicOr
+    <|> parseMathExpression
 
-parseLogicOr :: Parser Expression
-parseLogicOr = do
-  left <- parseLogicAnd
-  rest <- many $ do
-    op <-
-      parseIdentMany
-        [("or", Or)]
-    right <- parseLogicAnd
-    return (op, right)
-  return $ foldl' (\left (op, right) -> Logical left op right) left rest
-
-parseLogicAnd :: Parser Expression
-parseLogicAnd = do
-  left <- parseEquality
-  rest <- many $ do
-    op <-
-      parseIdentMany
-        [("and", And)]
-    right <- parseEquality
-    return (op, right)
-  return $ foldl' (\left (op, right) -> Logical left op right) left rest
-
-parseEquality :: Parser Expression
-parseEquality = do
-  left <- parseCompare
-  rest <- many $ do
-    op <-
-      parseIdentMany
-        [ ("==", Eq)
-        , ("!=", NotEq)
-        ]
-    right <- parseCompare
-    return (op, right)
-  return $ foldl' (\left (op, right) -> Binary left op right) left rest
-
-parseCompare :: Parser Expression
-parseCompare = do
-  left <- parseTerm
-  rest <- many $ do
-    op <-
-      parseIdentMany
-        [ ("<=", LessEq)
-        , (">=", GreaterEq)
-        , ("<", Less)
-        , (">", Greater)
-        ]
-    right <- parseTerm
-    return (op, right)
-  return $ foldl' (\left (op, right) -> Binary left op right) left rest
-
-parseTerm :: Parser Expression
-parseTerm = do
-  left <- parseFactor
-  rest <- many $ do
-    op <- parseIdentMany [("+", Plus), ("-", Minus)]
-    right <- parseFactor
-    return (op, right)
-  return $ foldl' (\left (op, right) -> Binary left op right) left rest
-
-parseFactor :: Parser Expression
-parseFactor = do
-  left <- parseUnary
-  rest <- many $ do
-    op <- parseIdentMany [("/", Divide), ("*", Multiply)]
-    right <- parseUnary
-    return (op, right)
-  return $ foldl' (\left (op, right) -> Binary left op right) left rest
-
-parseUnary :: Parser Expression
-parseUnary =
-  ( do
-      op <- parseIdentMany [("!", Not), ("-", Negate)] <?> "unary operator"
-      Unary op <$> parseUnary
-  )
-    <|> parseCall
+parseMathExpression :: Parser Expression
+parseMathExpression = makeExprParser parseCall operatorTable <?> "expression"
 
 parseCall :: Parser Expression
 parseCall = do
@@ -263,8 +191,17 @@ sc =
     (L.skipLineComment "//") -- (3)
     (L.skipBlockComment "/*" "*/") -- (4)
 
-parseIdentMany :: [(Text, a)] -> Parser a
-parseIdentMany val = choice $ uncurry parseIdent <$> val
+operatorTable :: [[Operator Parser Expression]]
+operatorTable =
+  [ [prefix "-" (Unary Negate), prefix "!" (Unary Not)]
+  , [binary "/" (Binary Divide), binary "*" (Binary Multiply)]
+  , [binary "+" (Binary Plus), binary "-" (Binary Minus)]
+  , [binary "<=" (Binary LessEq), binary ">=" (Binary GreaterEq), binary "<" (Binary Less), binary ">" (Binary Greater)]
+  , [binary "==" (Binary Eq), binary "!=" (Binary LessEq)]
+  , [binary "and" (Logical And)]
+  , [binary "or" (Logical Or)]
+  ]
 
-parseIdent :: Text -> a -> Parser a
-parseIdent s o = symbol s >> return o
+binary name f = InfixL (symbol name $> f)
+
+prefix name f = Prefix (symbol name $> f)

@@ -20,7 +20,7 @@ evalExpr env (Grouping v) = evalExpr env v
 evalExpr env (Unary Not e) = evalExpr env e >>= (liftThrows . unaryNot)
 evalExpr env (Unary Negate e) = evalExpr env e >>= (liftThrows . unaryNegate)
 evalExpr env (Variable var) = getVar env var
-evalExpr env (Binary leftE op rightE) = do
+evalExpr env (Binary op leftE rightE) = do
   leftV <- evalExpr env leftE
   rightV <- evalExpr env rightE
   case lookup op binaryOpList of
@@ -28,12 +28,12 @@ evalExpr env (Binary leftE op rightE) = do
 evalExpr env (Assignment name expr) = do
   val <- evalExpr env expr
   setVar env name val
-evalExpr env (Logical leftE And rightE) = do
+evalExpr env (Logical And leftE rightE) = do
   leftV <- evalExpr env leftE
   if valueTruthy leftV
     then evalExpr env rightE
     else return leftV
-evalExpr env (Logical leftE Or rightE) = do
+evalExpr env (Logical Or leftE rightE) = do
   leftV <- evalExpr env leftE
   if valueTruthy leftV
     then return leftV
