@@ -31,6 +31,7 @@ parseDeclaration = parseVarDeclStmt <|> parseStatement
 parseVarDeclStmt :: Parser Statement
 parseVarDeclStmt = parseVarDeclStmtBody <* symbol ";"
 
+parseVarDeclStmtBody :: Parser Statement
 parseVarDeclStmtBody = do
   ident <- symbol "var" *> parseIdentifier
   value <- optional (symbol "=" >> parseExpression)
