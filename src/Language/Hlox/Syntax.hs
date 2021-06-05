@@ -9,24 +9,24 @@ import Language.Hlox.Value (Value)
 import Text.Megaparsec (SourcePos)
 
 data Statement a
-  = Expression a Expression
-  | Print a Expression
-  | Declaration a Text (Maybe Expression)
+  = Expression a (Expression a)
+  | Print a (Expression a)
+  | Declaration a Text (Maybe (Expression a))
   | Block a [Statement a]
-  | If a Expression (Statement a) (Maybe (Statement a))
-  | While a Expression (Statement a)
+  | If a (Expression a) (Statement a) (Maybe (Statement a))
+  | While a (Expression a) (Statement a)
   | Break a
   deriving (Show)
 
-data Expression
-  = Literal Value
-  | Grouping Expression
-  | Unary UnaryOp Expression
-  | Binary BinaryOp Expression Expression
-  | Variable Text
-  | Assignment Text Expression
-  | Logical LogicalOp Expression Expression
-  | Call Expression [Expression]
+data Expression a
+  = Literal a Value
+  | Grouping a (Expression a)
+  | Unary a UnaryOp (Expression a)
+  | Binary a BinaryOp (Expression a) (Expression a)
+  | Variable a Text
+  | Assignment a Text (Expression a)
+  | Logical a LogicalOp (Expression a) (Expression a)
+  | Call a (Expression a) [Expression a]
   deriving (Show)
 
 data UnaryOp = Not | Negate deriving (Show, Eq)

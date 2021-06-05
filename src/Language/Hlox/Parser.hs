@@ -49,14 +49,14 @@ parseForStatement :: Parser (Statement ())
 parseForStatement = do
   symbol "for" *> symbol "("
   initializer <- optional (parseVarDeclStmtBody <|> (Expression () <$> parseExpression)) <* symbol ";"
-  condition <- (parseExpression <|> return (Literal $ Bool True)) <* symbol ";"
-  increment <- (parseExpression <|> return (Literal $ Bool True)) <* symbol ")"
+  condition <- (parseExpression <|> return (Literal () $ Bool True)) <* symbol ";"
+  increment <- (parseExpression <|> return (Literal () $ Bool True)) <* symbol ")"
   body <- parseStatement
 
   return $
     Block
       ()
-      [ fromMaybe (Expression () $ Literal Nil) initializer
+      [ fromMaybe (Expression () $ Literal () Nil) initializer
       , While () condition $ Block () [body, Expression () increment]
       ]
 
@@ -81,41 +81,41 @@ parseExprStatement = (Expression () <$> parseExpression) <* symbol ";"
 parseBlockStatement :: Parser (Statement ())
 parseBlockStatement = Block () <$> (symbol "{" *> many parseDeclaration <* symbol "}")
 
-parseExpression :: Parser Expression
+parseExpression :: Parser (Expression ())
 parseExpression = parseAssignment
 
-parseAssignment :: Parser Expression
+parseAssignment :: Parser (Expression ())
 parseAssignment =
   try
     ( do
         ident <- parseIdentifier
         symbol "="
-        Assignment ident <$> parseAssignment
+        Assignment () ident <$> parseAssignment
     )
     <|> parseMathExpression
 
-parseMathExpression :: Parser Expression
+parseMathExpression :: Parser (Expression ())
 parseMathExpression = makeExprParser parseCall operatorTable <?> "expression"
 
-parseCall :: Parser Expression
+parseCall :: Parser (Expression ())
 parseCall = do
   prim <- parsePrimary
   calls <- many parseCallArgs
   case calls of
     [] -> return prim
-    exprs -> return $ foldl' Call prim calls
+    exprs -> return $ foldl' (Call ()) prim calls
 
-parseCallArgs :: Parser [Expression]
+parseCallArgs :: Parser [Expression ()]
 parseCallArgs = do
   args <- symbol "(" *> sepEndBy parseExpression (symbol ",") <* symbol ")"
   if length args < 256 then return args else fail "can't have call with more than 255 arguments"
 
-parsePrimary :: Parser Expression
+parsePrimary :: Parser (Expression ())
 parsePrimary = parseLiteral <|> parseGrouping <|> parseVariable
 
-parseVariable :: Parser Expression
+parseVariable :: Parser (Expression ())
 parseVariable =
-  Variable <$> parseIdentifier
+  Variable () <$> parseIdentifier
 
 parseIdentifier :: Parser Text
 parseIdentifier = lexeme $ do
@@ -123,15 +123,15 @@ parseIdentifier = lexeme $ do
   rest <- many (letterChar <|> digitChar)
   return $ T.pack $ first : rest
 
-parseLiteral :: Parser Expression
-parseLiteral = Literal <$> parseValue
+parseLiteral :: Parser (Expression ())
+parseLiteral = Literal () <$> parseValue
 
-parseGrouping :: Parser Expression
+parseGrouping :: Parser (Expression ())
 parseGrouping = do
   symbol "("
   expr <- parseExpression
   symbol ")"
-  return $ Grouping expr
+  return $ Grouping () expr
 
 parseValue :: Parser Value
 parseValue =
@@ -191,15 +191,15 @@ sc =
     (L.skipLineComment "//") -- (3)
     (L.skipBlockComment "/*" "*/") -- (4)
 
-operatorTable :: [[Operator Parser Expression]]
+operatorTable :: [[Operator Parser (Expression ())]]
 operatorTable =
-  [ [prefix "-" (Unary Negate), prefix "!" (Unary Not)]
-  , [binary "/" (Binary Divide), binary "*" (Binary Multiply)]
-  , [binary "+" (Binary Plus), binary "-" (Binary Minus)]
-  , [binary "<=" (Binary LessEq), binary ">=" (Binary GreaterEq), binary "<" (Binary Less), binary ">" (Binary Greater)]
-  , [binary "==" (Binary Eq), binary "!=" (Binary LessEq)]
-  , [binary "and" (Logical And)]
-  , [binary "or" (Logical Or)]
+  [ [prefix "-" (Unary () Negate), prefix "!" (Unary () Not)]
+  , [binary "/" (Binary () Divide), binary "*" (Binary () Multiply)]
+  , [binary "+" (Binary () Plus), binary "-" (Binary () Minus)]
+  , [binary "<=" (Binary () LessEq), binary ">=" (Binary () GreaterEq), binary "<" (Binary () Less), binary ">" (Binary () Greater)]
+  , [binary "==" (Binary () Eq), binary "!=" (Binary () LessEq)]
+  , [binary "and" (Logical () And)]
+  , [binary "or" (Logical () Or)]
   ]
 
 binary name f = InfixL (symbol name $> f)
