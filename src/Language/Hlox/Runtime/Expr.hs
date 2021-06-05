@@ -14,7 +14,7 @@ import Language.Hlox.Syntax
 import Language.Hlox.Value
 import Text.Megaparsec
 
-evalExpr :: Env Value -> Expression () -> IOThrowsError Value
+evalExpr :: Env Value -> Expression a -> IOThrowsError Value
 evalExpr env (Literal _ v) = return v
 evalExpr env (Grouping _ v) = evalExpr env v
 evalExpr env (Unary _ Not e) = evalExpr env e >>= (liftThrows . unaryNot)

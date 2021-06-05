@@ -17,105 +17,114 @@ import Text.Megaparsec.Char.Lexer qualified as L
 
 type Parser = Parsec Void Text
 
-parseProgram :: Parser [Statement ()]
+parseProgram :: Parser [Statement Annotation]
 parseProgram = many parseProgramLine
 
-parseProgramLine :: Parser (Statement ())
+parseProgramLine :: Parser (Statement Annotation)
 parseProgramLine = parseDeclaration
 
-parseDeclaration :: Parser (Statement ())
+parseDeclaration :: Parser (Statement Annotation)
 parseDeclaration = parseVarDeclStmt <|> parseStatement
 
-parseVarDeclStmt :: Parser (Statement ())
+parseVarDeclStmt :: Parser (Statement Annotation)
 parseVarDeclStmt = parseVarDeclStmtBody <* symbol ";"
 
-parseVarDeclStmtBody :: Parser (Statement ())
+parseVarDeclStmtBody :: Parser (Statement Annotation)
 parseVarDeclStmtBody = do
+  pos <- annotatePos
   ident <- symbol "var" *> parseIdentifier
   value <- optional (symbol "=" >> parseExpression)
-  return $ Declaration () ident value
+  return $ Declaration pos ident value
 
-parseStatement :: Parser (Statement ())
+parseStatement :: Parser (Statement Annotation)
 parseStatement =
   parseIfStatement
     <|> parsePrintStatement
     <|> parseWhileStatement
-    <|> ((symbol "break" *> symbol ";") $> Break ())
+    <|> (annotatePos >>= \pos -> (symbol "break" *> symbol ";") $> Break pos)
     <|> parseForStatement
     <|> parseExprStatement
     <|> parseBlockStatement
 
-parseForStatement :: Parser (Statement ())
+parseForStatement :: Parser (Statement Annotation)
 parseForStatement = do
+  forPos <- annotatePos
   symbol "for" *> symbol "("
-  initializer <- optional (parseVarDeclStmtBody <|> (Expression () <$> parseExpression)) <* symbol ";"
-  condition <- (parseExpression <|> return (Literal () $ Bool True)) <* symbol ";"
-  increment <- (parseExpression <|> return (Literal () $ Bool True)) <* symbol ")"
+  initPos <- annotatePos
+  initializer <- optional (parseVarDeclStmtBody <|> (Expression initPos <$> parseExpression)) <* symbol ";"
+  condPos <- annotatePos
+  condition <- (parseExpression <|> return (Literal condPos (Bool True))) <* symbol ";"
+  incPos <- annotatePos
+  increment <- (parseExpression <|> return (Literal incPos (Bool True))) <* symbol ")"
   body <- parseStatement
 
   return $
     Block
-      ()
-      [ fromMaybe (Expression () $ Literal () Nil) initializer
-      , While () condition $ Block () [body, Expression () increment]
+      forPos
+      [ fromMaybe (Expression initPos $ Literal initPos Nil) initializer
+      , While forPos condition $ Block forPos [body, Expression incPos increment]
       ]
 
-parseWhileStatement :: Parser (Statement ())
+parseWhileStatement :: Parser (Statement Annotation)
 parseWhileStatement = do
+  pos <- annotatePos
   cond <- symbol "while" *> symbol "(" *> parseExpression <* symbol ")"
-  While () cond <$> parseStatement
+  While pos cond <$> parseStatement
 
-parseIfStatement :: Parser (Statement ())
+parseIfStatement :: Parser (Statement Annotation)
 parseIfStatement = do
+  pos <- annotatePos
   cond <- symbol "if" *> symbol "(" *> parseExpression <* symbol ")"
   ifTrue <- parseStatement
   ifFalse <- optional (symbol "else" *> parseStatement)
-  return $ If () cond ifTrue ifFalse
+  return $ If pos cond ifTrue ifFalse
 
-parsePrintStatement :: Parser (Statement ())
-parsePrintStatement = Print () <$> (symbol "print" *> parseExpression <* symbol ";")
+parsePrintStatement :: Parser (Statement Annotation)
+parsePrintStatement = Print <$> annotatePos <*> (symbol "print" *> parseExpression <* symbol ";")
 
-parseExprStatement :: Parser (Statement ())
-parseExprStatement = (Expression () <$> parseExpression) <* symbol ";"
+parseExprStatement :: Parser (Statement Annotation)
+parseExprStatement = (Expression <$> annotatePos <*> parseExpression) <* symbol ";"
 
-parseBlockStatement :: Parser (Statement ())
-parseBlockStatement = Block () <$> (symbol "{" *> many parseDeclaration <* symbol "}")
+parseBlockStatement :: Parser (Statement Annotation)
+parseBlockStatement = Block <$> annotatePos <*> (symbol "{" *> many parseDeclaration <* symbol "}")
 
-parseExpression :: Parser (Expression ())
+parseExpression :: Parser (Expression Annotation)
 parseExpression = parseAssignment
 
-parseAssignment :: Parser (Expression ())
+parseAssignment :: Parser (Expression Annotation)
 parseAssignment =
   try
     ( do
+        pos <- annotatePos
         ident <- parseIdentifier
         symbol "="
-        Assignment () ident <$> parseAssignment
+        Assignment pos ident <$> parseAssignment
     )
     <|> parseMathExpression
 
-parseMathExpression :: Parser (Expression ())
+parseMathExpression :: Parser (Expression Annotation)
 parseMathExpression = makeExprParser parseCall operatorTable <?> "expression"
 
-parseCall :: Parser (Expression ())
+parseCall :: Parser (Expression Annotation)
 parseCall = do
+  pos <- annotatePos
   prim <- parsePrimary
   calls <- many parseCallArgs
   case calls of
     [] -> return prim
-    exprs -> return $ foldl' (Call ()) prim calls
+    exprs -> return $ foldl' (Call pos) prim calls
 
-parseCallArgs :: Parser [Expression ()]
+parseCallArgs :: Parser [Expression Annotation]
 parseCallArgs = do
   args <- symbol "(" *> sepEndBy parseExpression (symbol ",") <* symbol ")"
   if length args < 256 then return args else fail "can't have call with more than 255 arguments"
 
-parsePrimary :: Parser (Expression ())
+parsePrimary :: Parser (Expression Annotation)
 parsePrimary = parseLiteral <|> parseGrouping <|> parseVariable
 
-parseVariable :: Parser (Expression ())
+parseVariable :: Parser (Expression Annotation)
 parseVariable =
-  Variable () <$> parseIdentifier
+  Variable <$> annotatePos <*> parseIdentifier
 
 parseIdentifier :: Parser Text
 parseIdentifier = lexeme $ do
@@ -123,15 +132,16 @@ parseIdentifier = lexeme $ do
   rest <- many (letterChar <|> digitChar)
   return $ T.pack $ first : rest
 
-parseGrouping :: Parser (Expression ())
+parseGrouping :: Parser (Expression Annotation)
 parseGrouping = do
+  pos <- annotatePos
   symbol "("
   expr <- parseExpression
   symbol ")"
-  return $ Grouping () expr
+  return $ Grouping pos expr
 
-parseLiteral :: Parser (Expression ())
-parseLiteral = Literal () <$> parseValue
+parseLiteral :: Parser (Expression Annotation)
+parseLiteral = Literal <$> annotatePos <*> parseValue
 
 parseValue :: Parser Value
 parseValue =
@@ -191,17 +201,26 @@ sc =
     (L.skipLineComment "//") -- (3)
     (L.skipBlockComment "/*" "*/") -- (4)
 
-operatorTable :: [[Operator Parser (Expression ())]]
+operatorTable :: [[Operator Parser (Expression Annotation)]]
 operatorTable =
-  [ [prefix "-" (Unary () Negate), prefix "!" (Unary () Not)]
-  , [binary "/" (Binary () Divide), binary "*" (Binary () Multiply)]
-  , [binary "+" (Binary () Plus), binary "-" (Binary () Minus)]
-  , [binary "<=" (Binary () LessEq), binary ">=" (Binary () GreaterEq), binary "<" (Binary () Less), binary ">" (Binary () Greater)]
-  , [binary "==" (Binary () Eq), binary "!=" (Binary () LessEq)]
-  , [binary "and" (Logical () And)]
-  , [binary "or" (Logical () Or)]
+  [ [prefix "-" (`Unary` Negate), prefix "!" (`Unary` Not)]
+  , [binary "/" (`Binary` Divide), binary "*" (`Binary` Multiply)]
+  , [binary "+" (`Binary` Plus), binary "-" (`Binary` Minus)]
+  , [binary "<=" (`Binary` LessEq), binary ">=" (`Binary` GreaterEq), binary "<" (`Binary` Less), binary ">" (`Binary` Greater)]
+  , [binary "==" (`Binary` Eq), binary "!=" (`Binary` LessEq)]
+  , [binary "and" (`Logical` And)]
+  , [binary "or" (`Logical` Or)]
   ]
 
-binary name f = InfixL (symbol name $> f)
+binary name f = InfixL $ do
+  pos <- annotatePos
+  symbol name
+  return $ f pos
 
-prefix name f = Prefix (symbol name $> f)
+prefix name f = Prefix $ do
+  pos <- annotatePos
+  symbol name
+  return $ f pos
+
+annotatePos :: Parser Annotation
+annotatePos = getSourcePos <&> Annotation
