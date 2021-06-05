@@ -123,15 +123,15 @@ parseIdentifier = lexeme $ do
   rest <- many (letterChar <|> digitChar)
   return $ T.pack $ first : rest
 
-parseLiteral :: Parser (Expression ())
-parseLiteral = Literal () <$> parseValue
-
 parseGrouping :: Parser (Expression ())
 parseGrouping = do
   symbol "("
   expr <- parseExpression
   symbol ")"
   return $ Grouping () expr
+
+parseLiteral :: Parser (Expression ())
+parseLiteral = Literal () <$> parseValue
 
 parseValue :: Parser Value
 parseValue =
