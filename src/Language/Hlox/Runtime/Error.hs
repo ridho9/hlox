@@ -12,6 +12,8 @@ import Data.Text qualified as T
 import Data.Void (Void)
 import Text.Megaparsec
 
+type ParserError = ParseErrorBundle Text Void
+
 type ThrowsError = Either Error
 
 type IOThrowsError = ExceptT Error IO
@@ -24,7 +26,7 @@ runIOThrows :: IOThrowsError Text -> IO Text
 runIOThrows action = runExceptT (trapError action) <&> extractValue
 
 data Error
-  = Parser (ParseErrorBundle Text Void)
+  = Parser ParserError
   | TypeMismatch Text Text
   | UnboundVar Text Text
   | LoopBreak Text

@@ -6,15 +6,16 @@ module Language.Hlox.Syntax where
 import Data.Text (Text)
 import Data.Text qualified as T
 import Language.Hlox.Value (Value)
+import Text.Megaparsec (SourcePos)
 
-data Statement
-  = Expression Expression
-  | Print Expression
-  | Declaration Text (Maybe Expression)
-  | Block [Statement]
-  | If Expression Statement (Maybe Statement)
-  | While Expression Statement
-  | Break
+data Statement a
+  = Expression a Expression
+  | Print a Expression
+  | Declaration a Text (Maybe Expression)
+  | Block a [Statement a]
+  | If a Expression (Statement a) (Maybe (Statement a))
+  | While a Expression (Statement a)
+  | Break a
   deriving (Show)
 
 data Expression

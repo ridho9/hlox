@@ -17,70 +17,69 @@ import Text.Megaparsec.Char.Lexer qualified as L
 
 type Parser = Parsec Void Text
 
-type ParserError = ParseErrorBundle Text Void
-
-parseProgram :: Parser [Statement]
+parseProgram :: Parser [Statement ()]
 parseProgram = many parseProgramLine
 
-parseProgramLine :: Parser Statement
+parseProgramLine :: Parser (Statement ())
 parseProgramLine = parseDeclaration
 
-parseDeclaration :: Parser Statement
+parseDeclaration :: Parser (Statement ())
 parseDeclaration = parseVarDeclStmt <|> parseStatement
 
-parseVarDeclStmt :: Parser Statement
+parseVarDeclStmt :: Parser (Statement ())
 parseVarDeclStmt = parseVarDeclStmtBody <* symbol ";"
 
-parseVarDeclStmtBody :: Parser Statement
+parseVarDeclStmtBody :: Parser (Statement ())
 parseVarDeclStmtBody = do
   ident <- symbol "var" *> parseIdentifier
   value <- optional (symbol "=" >> parseExpression)
-  return $ Declaration ident value
+  return $ Declaration () ident value
 
-parseStatement :: Parser Statement
+parseStatement :: Parser (Statement ())
 parseStatement =
   parseIfStatement
     <|> parsePrintStatement
     <|> parseWhileStatement
-    <|> ((symbol "break" *> symbol ";") $> Break)
+    <|> ((symbol "break" *> symbol ";") $> Break ())
     <|> parseForStatement
     <|> parseExprStatement
     <|> parseBlockStatement
 
-parseForStatement :: Parser Statement
+parseForStatement :: Parser (Statement ())
 parseForStatement = do
   symbol "for" *> symbol "("
-  initializer <- optional (parseVarDeclStmtBody <|> (Expression <$> parseExpression)) <* symbol ";"
+  initializer <- optional (parseVarDeclStmtBody <|> (Expression () <$> parseExpression)) <* symbol ";"
   condition <- (parseExpression <|> return (Literal $ Bool True)) <* symbol ";"
   increment <- (parseExpression <|> return (Literal $ Bool True)) <* symbol ")"
   body <- parseStatement
 
   return $
     Block
-      [ fromMaybe (Expression $ Literal Nil) initializer
-      , While condition $ Block [body, Expression increment]
+      ()
+      [ fromMaybe (Expression () $ Literal Nil) initializer
+      , While () condition $ Block () [body, Expression () increment]
       ]
 
-parseWhileStatement :: Parser Statement
+parseWhileStatement :: Parser (Statement ())
 parseWhileStatement = do
   cond <- symbol "while" *> symbol "(" *> parseExpression <* symbol ")"
-  While cond <$> parseStatement
+  While () cond <$> parseStatement
 
-parseIfStatement :: Parser Statement
+parseIfStatement :: Parser (Statement ())
 parseIfStatement = do
   cond <- symbol "if" *> symbol "(" *> parseExpression <* symbol ")"
   ifTrue <- parseStatement
   ifFalse <- optional (symbol "else" *> parseStatement)
-  return $ If cond ifTrue ifFalse
+  return $ If () cond ifTrue ifFalse
 
-parsePrintStatement :: Parser Statement
-parsePrintStatement = Print <$> (symbol "print" *> parseExpression <* symbol ";")
+parsePrintStatement :: Parser (Statement ())
+parsePrintStatement = Print () <$> (symbol "print" *> parseExpression <* symbol ";")
 
-parseExprStatement :: Parser Statement
-parseExprStatement = (Expression <$> parseExpression) <* symbol ";"
+parseExprStatement :: Parser (Statement ())
+parseExprStatement = (Expression () <$> parseExpression) <* symbol ";"
 
-parseBlockStatement :: Parser Statement
-parseBlockStatement = Block <$> (symbol "{" *> many parseDeclaration <* symbol "}")
+parseBlockStatement :: Parser (Statement ())
+parseBlockStatement = Block () <$> (symbol "{" *> many parseDeclaration <* symbol "}")
 
 parseExpression :: Parser Expression
 parseExpression = parseAssignment
