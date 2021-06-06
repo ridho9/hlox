@@ -13,11 +13,11 @@ import Language.Hlox.Runtime.Expr (evalExpr, valueTruthy)
 import Language.Hlox.Syntax
 import Language.Hlox.Value
 
-evalStmts :: Traversable t => Env Value -> t (Statement a) -> IOThrowsError (t Value)
+evalStmts :: Traversable t => Env Value -> t (Statement Annotation) -> IOThrowsError (t Value)
 evalStmts env = mapM (evalStmt env)
 
-evalStmt :: Env Value -> Statement a -> IOThrowsError Value
-evalStmt env (Break _) = liftThrows $ throwError $ LoopBreak "called outside of a loop"
+evalStmt :: Env Value -> Statement Annotation -> IOThrowsError Value
+evalStmt env (Break l) = liftThrows $ throwError $ LoopBreak (loc l) "called outside of a loop"
 evalStmt env (Expression _ expr) = evalExpr env expr
 evalStmt env (Print _ expr) = do
   val <- evalExpr env expr
@@ -53,6 +53,6 @@ evalStmt env (While ann condition body) = do
       case bodyRes of
         Right val -> evalStmt env (While ann condition body)
         Left err -> case err of
-          LoopBreak _ -> return Nil
+          LoopBreak _ _ -> return Nil
           err -> throwError err
     else return Nil

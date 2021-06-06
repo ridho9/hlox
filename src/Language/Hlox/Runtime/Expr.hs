@@ -14,7 +14,7 @@ import Language.Hlox.Syntax
 import Language.Hlox.Value
 import Text.Megaparsec
 
-evalExpr :: Env Value -> Expression a -> IOThrowsError Value
+evalExpr :: Env Value -> Expression Annotation -> IOThrowsError Value
 evalExpr env (Literal _ v) = return v
 evalExpr env (Grouping _ v) = evalExpr env v
 evalExpr env (Unary _ Not e) = evalExpr env e >>= (liftThrows . unaryNot)
@@ -52,45 +52,47 @@ binaryOpList =
   , (NotEq, binaryNotEq)
   ]
 
-binaryNotEq :: Value -> Value -> ThrowsError Value
+type BinaryOpFunc = Value -> Value -> ThrowsError Value
+
+binaryNotEq :: BinaryOpFunc
 binaryNotEq left right = return $ Bool $ left /= right
 
-binaryEq :: Value -> Value -> ThrowsError Value
+binaryEq :: BinaryOpFunc
 binaryEq left right = return $ Bool $ left == right
 
-binaryLessEq :: Value -> Value -> ThrowsError Value
+binaryLessEq :: BinaryOpFunc
 binaryLessEq (Number left) right = binarySameTypeOp Bool unpackNum (<=) (Number left) right
 binaryLessEq (String left) right = binarySameTypeOp Bool unpackStr (<=) (String left) right
-binaryLessEq left _ = throwError $ TypeMismatch "number or string" (showValue left)
+binaryLessEq left _ = throwError $ TypeMismatch undefined "number or string" (showValue left)
 
-binaryLess :: Value -> Value -> ThrowsError Value
+binaryLess :: BinaryOpFunc
 binaryLess (Number left) right = binarySameTypeOp Bool unpackNum (<) (Number left) right
 binaryLess (String left) right = binarySameTypeOp Bool unpackStr (<) (String left) right
-binaryLess left _ = throwError $ TypeMismatch "number or string" (showValue left)
+binaryLess left _ = throwError $ TypeMismatch undefined "number or string" (showValue left)
 
-binaryGreaterEq :: Value -> Value -> ThrowsError Value
+binaryGreaterEq :: BinaryOpFunc
 binaryGreaterEq (Number left) right = binarySameTypeOp Bool unpackNum (>=) (Number left) right
 binaryGreaterEq (String left) right = binarySameTypeOp Bool unpackStr (>=) (String left) right
-binaryGreaterEq left _ = throwError $ TypeMismatch "number or string" (showValue left)
+binaryGreaterEq left _ = throwError $ TypeMismatch undefined "number or string" (showValue left)
 
-binaryGreater :: Value -> Value -> ThrowsError Value
+binaryGreater :: BinaryOpFunc
 binaryGreater (Number left) right = binarySameTypeOp Bool unpackNum (>) (Number left) right
 binaryGreater (String left) right = binarySameTypeOp Bool unpackStr (>) (String left) right
-binaryGreater left _ = throwError $ TypeMismatch "number or string" (showValue left)
+binaryGreater left _ = throwError $ TypeMismatch undefined "number or string" (showValue left)
 
-binaryMultiply :: Value -> Value -> ThrowsError Value
+binaryMultiply :: BinaryOpFunc
 binaryMultiply = binaryNumberOp (*)
 
-binaryDivide :: Value -> Value -> ThrowsError Value
+binaryDivide :: BinaryOpFunc
 binaryDivide = binaryNumberOp (/)
 
-binaryMinus :: Value -> Value -> ThrowsError Value
+binaryMinus :: BinaryOpFunc
 binaryMinus = binaryNumberOp (-)
 
-binaryPlus :: Value -> Value -> ThrowsError Value
+binaryPlus :: BinaryOpFunc
 binaryPlus (Number left) right = binaryNumberOp (+) (Number left) right
 binaryPlus (String left) right = binaryStringOp (<>) (String left) right
-binaryPlus left _ = throwError $ TypeMismatch "number or string" (showValue left)
+binaryPlus left _ = throwError $ TypeMismatch undefined "number or string" (showValue left)
 
 binaryNumberOp = binarySameTypeOp Number unpackNum
 
@@ -117,8 +119,8 @@ type Unpacker a = Value -> ThrowsError a
 
 unpackNum :: Unpacker Double
 unpackNum (Number n) = return n
-unpackNum v = throwError $ TypeMismatch "number" (showValue v)
+unpackNum v = throwError $ TypeMismatch undefined "number" (showValue v)
 
 unpackStr :: Unpacker Text
 unpackStr (String n) = return n
-unpackStr v = throwError $ TypeMismatch "string" (showValue v)
+unpackStr v = throwError $ TypeMismatch undefined "string" (showValue v)

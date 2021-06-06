@@ -21,13 +21,13 @@ isBound envRef var = readIORef envRef <&> (isJust . lookup var)
 getVar :: Env a -> Text -> IOThrowsError a
 getVar envRef var = do
   env <- liftIO $ readIORef envRef
-  maybe (throwError $ UnboundVar "Getting undefined variable" var) (liftIO . readIORef) (lookup var env)
+  maybe (throwError $ UnboundVar undefined "Getting undefined variable" var) (liftIO . readIORef) (lookup var env)
 
 setVar :: Env a -> Text -> a -> IOThrowsError a
 setVar envRef name value = do
   env <- liftIO $ readIORef envRef
   maybe
-    (throwError $ UnboundVar "Getting undefined variable" name)
+    (throwError $ UnboundVar undefined "Getting undefined variable" name)
     (liftIO . flip writeIORef value)
     (lookup name env)
   return value

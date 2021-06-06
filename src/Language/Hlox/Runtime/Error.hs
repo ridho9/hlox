@@ -10,6 +10,7 @@ import Data.Text qualified as T
 -- import Language.Hlox.Parser (ParserError)
 
 import Data.Void (Void)
+import Language.Hlox.Syntax
 import Text.Megaparsec
 
 type ParserError = ParseErrorBundle Text Void
@@ -27,18 +28,18 @@ runIOThrows action = runExceptT (trapError action) <&> extractValue
 
 data Error
   = Parser ParserError
-  | TypeMismatch Text Text
-  | UnboundVar Text Text
-  | LoopBreak Text
+  | TypeMismatch SourcePos Text Text
+  | UnboundVar SourcePos Text Text
+  | LoopBreak SourcePos Text
 
 instance Show Error where
   show = T.unpack . showError
 
 showError :: Error -> Text
-showError (UnboundVar message varname) = message <> ": " <> varname
-showError (TypeMismatch expected found) = "Invalid type: expected " <> expected <> ", found " <> found
 showError (Parser err) = "Parser error: " <> T.pack (errorBundlePretty err)
-showError (LoopBreak message) = "Break error: " <> message
+showError (UnboundVar _ message varname) = message <> ": " <> varname
+showError (TypeMismatch _ expected found) = "Invalid type: expected " <> expected <> ", found " <> found
+showError (LoopBreak _ message) = "Break error: " <> message
 
 trapError action = catchError action (return . (T.pack . show))
 
