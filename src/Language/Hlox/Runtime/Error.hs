@@ -3,12 +3,11 @@
 
 module Language.Hlox.Runtime.Error where
 
+import Control.Arrow
 import Control.Monad.Except
 import Data.Functor ((<&>))
 import Data.Text (Text)
 import Data.Text qualified as T
--- import Language.Hlox.Parser (ParserError)
-
 import Data.Void (Void)
 import Language.Hlox.Syntax
 import Text.Megaparsec
@@ -41,7 +40,7 @@ showError (UnboundVar _ message varname) = message <> ": " <> varname
 showError (TypeMismatch _ expected found) = "Invalid type: expected " <> expected <> ", found " <> found
 showError (LoopBreak _ message) = "Break error: " <> message
 
-trapError action = catchError action (return . (T.pack . show))
+trapError action = catchError action (show >>> T.pack >>> return)
 
 extractValue :: ThrowsError a -> a
 extractValue (Right val) = val

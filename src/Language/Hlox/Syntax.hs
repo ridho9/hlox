@@ -31,9 +31,6 @@ data Expression a
 
 newtype Annotation = Annotation {loc :: SourcePos}
 
-setLoc :: SourcePos -> Annotation -> Annotation
-setLoc p (Annotation _) = Annotation p
-
 class Annotated ast where
   ann :: ast a -> a
   amap :: (a -> a) -> ast a -> ast a
