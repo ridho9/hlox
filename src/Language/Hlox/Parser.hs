@@ -223,4 +223,4 @@ prefix name f = Prefix $ do
   return $ f pos
 
 annotatePos :: Parser Annotation
-annotatePos = getSourcePos <&> Annotation
+annotatePos = Annotation <$> getSourcePos
