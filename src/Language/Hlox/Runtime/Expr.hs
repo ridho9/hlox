@@ -17,13 +17,13 @@ import Text.Megaparsec
 evalExpr :: Env Value -> Expression Annotation -> IOThrowsError Value
 evalExpr env (Literal _ v) = return v
 evalExpr env (Grouping _ v) = evalExpr env v
-evalExpr env (Unary _ Not e) = evalExpr env e >>= (liftThrows . unaryNot)
-evalExpr env (Unary _ Negate e) = evalExpr env e >>= (liftThrows . unaryNegate)
+evalExpr env (Unary l Not e) = evalExpr env e >>= (liftThrows . unaryNot l)
+evalExpr env (Unary l Negate e) = evalExpr env e >>= (liftThrows . unaryNegate l)
 evalExpr env (Variable _ var) = getVar env var
-evalExpr env (Binary _ op leftE rightE) = do
+evalExpr env (Binary l op leftE rightE) = do
   leftV <- evalExpr env leftE
   rightV <- evalExpr env rightE
-  case lookup op binaryOpList of
+  case lookup op (binaryOpList l) of
     Just opFunc -> liftThrows $ opFunc leftV rightV
 evalExpr env (Assignment _ name expr) = do
   val <- evalExpr env expr
@@ -39,88 +39,90 @@ evalExpr env (Logical _ Or leftE rightE) = do
     then return leftV
     else evalExpr env rightE
 
-binaryOpList =
-  [ (Plus, binaryPlus)
-  , (Minus, binaryMinus)
-  , (Multiply, binaryMultiply)
-  , (Divide, binaryDivide)
-  , (Greater, binaryGreater)
-  , (GreaterEq, binaryGreaterEq)
-  , (Less, binaryLess)
-  , (LessEq, binaryLessEq)
-  , (Eq, binaryEq)
-  , (NotEq, binaryNotEq)
+binaryOpList loc =
+  [ (Plus, binaryPlus loc)
+  , (Minus, binaryMinus loc)
+  , (Multiply, binaryMultiply loc)
+  , (Divide, binaryDivide loc)
+  , (Greater, binaryGreater loc)
+  , (GreaterEq, binaryGreaterEq loc)
+  , (Less, binaryLess loc)
+  , (LessEq, binaryLessEq loc)
+  , (Eq, binaryEq loc)
+  , (NotEq, binaryNotEq loc)
   ]
 
-type BinaryOpFunc = Value -> Value -> ThrowsError Value
+type BinaryOpFunc = Annotation -> Value -> Value -> ThrowsError Value
 
 binaryNotEq :: BinaryOpFunc
-binaryNotEq left right = return $ Bool $ left /= right
+binaryNotEq _ left right = return $ Bool $ left /= right
 
 binaryEq :: BinaryOpFunc
-binaryEq left right = return $ Bool $ left == right
+binaryEq _ left right = return $ Bool $ left == right
 
 binaryLessEq :: BinaryOpFunc
-binaryLessEq (Number left) right = binarySameTypeOp Bool unpackNum (<=) (Number left) right
-binaryLessEq (String left) right = binarySameTypeOp Bool unpackStr (<=) (String left) right
-binaryLessEq left _ = throwError $ TypeMismatch undefined "number or string" (showValue left)
+binaryLessEq l (Number left) right = binarySameTypeOp Bool unpackNum l (<=) (Number left) right
+binaryLessEq l (String left) right = binarySameTypeOp Bool unpackStr l (<=) (String left) right
+binaryLessEq l left _ = throwError $ TypeMismatch (loc l) "number or string" (showValue left)
 
 binaryLess :: BinaryOpFunc
-binaryLess (Number left) right = binarySameTypeOp Bool unpackNum (<) (Number left) right
-binaryLess (String left) right = binarySameTypeOp Bool unpackStr (<) (String left) right
-binaryLess left _ = throwError $ TypeMismatch undefined "number or string" (showValue left)
+binaryLess l (Number left) right = binarySameTypeOp Bool unpackNum l (<) (Number left) right
+binaryLess l (String left) right = binarySameTypeOp Bool unpackStr l (<) (String left) right
+binaryLess l left _ = throwError $ TypeMismatch (loc l) "number or string" (showValue left)
 
 binaryGreaterEq :: BinaryOpFunc
-binaryGreaterEq (Number left) right = binarySameTypeOp Bool unpackNum (>=) (Number left) right
-binaryGreaterEq (String left) right = binarySameTypeOp Bool unpackStr (>=) (String left) right
-binaryGreaterEq left _ = throwError $ TypeMismatch undefined "number or string" (showValue left)
+binaryGreaterEq l (Number left) right = binarySameTypeOp Bool unpackNum l (>=) (Number left) right
+binaryGreaterEq l (String left) right = binarySameTypeOp Bool unpackStr l (>=) (String left) right
+binaryGreaterEq l left _ = throwError $ TypeMismatch (loc l) "number or string" (showValue left)
 
 binaryGreater :: BinaryOpFunc
-binaryGreater (Number left) right = binarySameTypeOp Bool unpackNum (>) (Number left) right
-binaryGreater (String left) right = binarySameTypeOp Bool unpackStr (>) (String left) right
-binaryGreater left _ = throwError $ TypeMismatch undefined "number or string" (showValue left)
+binaryGreater l (Number left) right = binarySameTypeOp Bool unpackNum l (>) (Number left) right
+binaryGreater l (String left) right = binarySameTypeOp Bool unpackStr l (>) (String left) right
+binaryGreater l left _ = throwError $ TypeMismatch (loc l) "number or string" (showValue left)
 
 binaryMultiply :: BinaryOpFunc
-binaryMultiply = binaryNumberOp (*)
+binaryMultiply l = binaryNumberOp l (*)
 
 binaryDivide :: BinaryOpFunc
-binaryDivide = binaryNumberOp (/)
+binaryDivide l = binaryNumberOp l (/)
 
 binaryMinus :: BinaryOpFunc
-binaryMinus = binaryNumberOp (-)
+binaryMinus l = binaryNumberOp l (-)
 
 binaryPlus :: BinaryOpFunc
-binaryPlus (Number left) right = binaryNumberOp (+) (Number left) right
-binaryPlus (String left) right = binaryStringOp (<>) (String left) right
-binaryPlus left _ = throwError $ TypeMismatch undefined "number or string" (showValue left)
+binaryPlus l (Number left) right = binaryNumberOp l (+) (Number left) right
+binaryPlus l (String left) right = binaryStringOp l (<>) (String left) right
+binaryPlus l left _ = throwError $ TypeMismatch (loc l) "number or string" (showValue left)
 
 binaryNumberOp = binarySameTypeOp Number unpackNum
 
 binaryStringOp = binarySameTypeOp String unpackStr
 
-binarySameTypeOp :: (b -> Value) -> Unpacker a -> (a -> a -> b) -> Value -> Value -> ThrowsError Value
-binarySameTypeOp resContainer unpacker op left right = do
-  l <- unpacker left
-  r <- unpacker right
+binarySameTypeOp :: (b -> Value) -> Unpacker a -> Annotation -> (a -> a -> b) -> Value -> Value -> ThrowsError Value
+binarySameTypeOp resContainer unpacker ann op left right = do
+  l <- unpacker ann left
+  r <- unpacker ann right
   return $ resContainer $ op l r
 
-unaryNegate :: Value -> ThrowsError Value
-unaryNegate v = unpackNum v <&> (Number . negate)
+type UnaryOpFunc = Annotation -> Value -> ThrowsError Value
 
-unaryNot :: Value -> ThrowsError Value
-unaryNot v = case valueTruthy v of v -> return $ Bool $ not v
+unaryNegate :: UnaryOpFunc
+unaryNegate l v = unpackNum l v <&> (Number . negate)
+
+unaryNot :: UnaryOpFunc
+unaryNot l v = case valueTruthy v of v -> return $ Bool $ not v
 
 valueTruthy :: Value -> Bool
 valueTruthy Nil = False
 valueTruthy (Bool v) = v
 valueTruthy _ = True
 
-type Unpacker a = Value -> ThrowsError a
+type Unpacker a = Annotation -> Value -> ThrowsError a
 
 unpackNum :: Unpacker Double
-unpackNum (Number n) = return n
-unpackNum v = throwError $ TypeMismatch undefined "number" (showValue v)
+unpackNum _ (Number n) = return n
+unpackNum l v = throwError $ TypeMismatch (loc l) "number" (showValue v)
 
 unpackStr :: Unpacker Text
-unpackStr (String n) = return n
-unpackStr v = throwError $ TypeMismatch undefined "string" (showValue v)
+unpackStr _ (String n) = return n
+unpackStr l v = throwError $ TypeMismatch (loc l) "string" (showValue v)
