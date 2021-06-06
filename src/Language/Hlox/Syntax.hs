@@ -6,7 +6,7 @@ module Language.Hlox.Syntax where
 import Data.Text (Text)
 import Data.Text qualified as T
 import Language.Hlox.Value (Value)
-import Text.Megaparsec (SourcePos)
+import Text.Megaparsec (SourcePos (SourcePos), sourcePosPretty)
 
 data Statement a
   = Expression a (Expression a)
@@ -30,6 +30,9 @@ data Expression a
   deriving (Show)
 
 newtype Annotation = Annotation {loc :: SourcePos}
+
+locString :: Annotation -> Text
+locString = T.pack . sourcePosPretty . loc
 
 class Annotated ast where
   ann :: ast a -> a

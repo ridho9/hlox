@@ -9,6 +9,7 @@ import Data.IORef
 import Data.Maybe (isJust)
 import Data.Text (Text)
 import Language.Hlox.Runtime.Error
+import Language.Hlox.Syntax
 
 type Env a = IORef [(Text, IORef a)]
 
@@ -18,16 +19,16 @@ nullEnv = newIORef []
 isBound :: Env a -> Text -> IO Bool
 isBound envRef var = readIORef envRef <&> (isJust . lookup var)
 
-getVar :: Env a -> Text -> IOThrowsError a
-getVar envRef var = do
+getVar :: Annotation -> Env a -> Text -> IOThrowsError a
+getVar l envRef var = do
   env <- liftIO $ readIORef envRef
-  maybe (throwError $ UnboundVar undefined "Getting undefined variable" var) (liftIO . readIORef) (lookup var env)
+  maybe (throwError $ UnboundVar l "Getting undefined variable" var) (liftIO . readIORef) (lookup var env)
 
-setVar :: Env a -> Text -> a -> IOThrowsError a
-setVar envRef name value = do
+setVar :: Annotation -> Env a -> Text -> a -> IOThrowsError a
+setVar l envRef name value = do
   env <- liftIO $ readIORef envRef
   maybe
-    (throwError $ UnboundVar undefined "Getting undefined variable" name)
+    (throwError $ UnboundVar l "Getting undefined variable" name)
     (liftIO . flip writeIORef value)
     (lookup name env)
   return value

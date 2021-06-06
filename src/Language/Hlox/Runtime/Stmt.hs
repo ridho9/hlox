@@ -17,7 +17,7 @@ evalStmts :: Traversable t => Env Value -> t (Statement Annotation) -> IOThrowsE
 evalStmts env = mapM (evalStmt env)
 
 evalStmt :: Env Value -> Statement Annotation -> IOThrowsError Value
-evalStmt env (Break l) = liftThrows $ throwError $ LoopBreak (loc l) "called outside of a loop"
+evalStmt env (Break l) = liftThrows $ throwError $ LoopBreak l "called outside of a loop"
 evalStmt env (Expression _ expr) = evalExpr env expr
 evalStmt env (Print _ expr) = do
   val <- evalExpr env expr
