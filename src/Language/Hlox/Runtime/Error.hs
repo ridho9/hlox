@@ -29,7 +29,7 @@ data Error
   = Parser ParserError
   | TypeMismatch Annotation Text Text
   | UnboundVar Annotation Text Text
-  | LoopBreak Annotation Text
+  | LoopBreak Text
 
 instance Show Error where
   show = T.unpack . showError
@@ -38,7 +38,7 @@ showError :: Error -> Text
 showError (Parser err) = "Parser error: " <> T.pack (errorBundlePretty err)
 showError (UnboundVar l message varname) = showPos l <> message <> ": " <> varname
 showError (TypeMismatch l expected found) = showPos l <> "Invalid type: expected " <> expected <> ", found " <> found
-showError (LoopBreak l message) = showPos l <> "Break error: " <> message
+showError (LoopBreak message) = "Break error: " <> message
 
 showPos l = "[" <> locString l <> "] "
 
