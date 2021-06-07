@@ -1,4 +1,5 @@
 {-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.Hlox.Runtime.Error where
@@ -27,8 +28,7 @@ runIOThrows action = runExceptT (trapError action) <&> extractValue
 
 data Error
   = Parser ParserError
-  | TypeMismatch Annotation Text Text
-  | UnboundVar Annotation Text Text
+  | RuntimeError Annotation RuntimeError
   | LoopBreak Text
 
 instance Show Error where
@@ -36,9 +36,20 @@ instance Show Error where
 
 showError :: Error -> Text
 showError (Parser err) = "Parser error: " <> T.pack (errorBundlePretty err)
-showError (UnboundVar l message varname) = showPos l <> message <> ": " <> varname
-showError (TypeMismatch l expected found) = showPos l <> "Invalid type: expected " <> expected <> ", found " <> found
 showError (LoopBreak message) = "Break error: " <> message
+showError (RuntimeError l err) = showPos l <> "Runtime error: " <> showRuntimeError err
+
+data RuntimeError
+  = TypeMismatch Text Text
+  | UnboundVar Text Text
+
+instance Show RuntimeError where
+  show = T.unpack . showRuntimeError
+
+showRuntimeError =
+  \case
+    UnboundVar message varname -> message <> ": " <> varname
+    TypeMismatch expected found -> "Invalid type: expected " <> expected <> ", found " <> found
 
 showPos l = "[" <> locString l <> "] "
 
