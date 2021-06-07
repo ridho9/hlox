@@ -38,11 +38,16 @@ runFile filename env = do
 
 runRepl :: Env Value -> IOThrowsError ()
 runRepl env =
-  do
-    runReplLine env 1
+  liftIO $ runReplLine env 1
   where
-    runReplLine :: Env Value -> Integer -> IOThrowsError ()
-    runReplLine env n = do
-      expr <- liftIO $ putStr (show n <> "> ") >> hFlush stdout >> getLine
-      interpretLine env ("repl-" <> tShow n) (T.pack expr)
-      runReplLine env (n + 1)
+    runReplLine :: Env Value -> Integer -> IO ()
+    runReplLine env n =
+      do
+        res <- runExceptT f
+        case res of
+          Left err -> print err >> runReplLine env n
+          _ -> runReplLine env (n + 1)
+      where
+        f = do
+          expr <- liftIO $ putStr (show n <> "> ") >> hFlush stdout >> getLine
+          interpretLine env ("repl-" <> tShow n) (T.pack expr)
