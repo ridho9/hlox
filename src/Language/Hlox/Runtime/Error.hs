@@ -51,8 +51,6 @@ showRuntimeError =
     UnboundVar message varname -> message <> ": " <> varname
     TypeMismatch expected found -> "Invalid type: expected " <> expected <> ", found " <> found
 
-showPos l = "[" <> locString l <> "] "
-
 trapError action = catchError action (show >>> T.pack >>> return)
 
 extractValue :: ThrowsError a -> a
