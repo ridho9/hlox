@@ -24,6 +24,7 @@ source-repository head
 
 library
     exposed-modules:
+          Language.Hlox.Annotation
           Language.Hlox.Interpreter
           Language.Hlox.Parser
           Language.Hlox.Runtime.Env

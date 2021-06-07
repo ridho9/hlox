@@ -3,7 +3,7 @@
 module Language.Hlox.Value where
 
 import Data.Text
-import qualified Data.Text as T
+import Data.Text qualified as T
 
 data Value
   = Number Double
@@ -20,9 +20,3 @@ showValue (String v) = T.pack $ show v
 showValue (Bool True) = "true"
 showValue (Bool False) = "false"
 showValue Nil = "nil"
-
-valueType :: Value -> Text
-valueType (Number _) = "number"
-valueType (String _) = "string"
-valueType (Bool _) = "boolean"
-valueType Nil = "nil"

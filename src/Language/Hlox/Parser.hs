@@ -9,6 +9,7 @@ import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Void
+import Language.Hlox.Annotation
 import Language.Hlox.Syntax
 import Language.Hlox.Value
 import Text.Megaparsec

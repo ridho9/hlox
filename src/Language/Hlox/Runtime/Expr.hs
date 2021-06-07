@@ -8,7 +8,7 @@ import Control.Monad.Except
 import Data.Functor ((<&>))
 import Data.Text (Text)
 import Data.Text qualified as T
-import Language.Hlox.Parser
+import Language.Hlox.Annotation
 import Language.Hlox.Runtime.Env
 import Language.Hlox.Runtime.Error
 import Language.Hlox.Syntax

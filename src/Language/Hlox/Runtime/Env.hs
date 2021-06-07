@@ -3,13 +3,12 @@
 module Language.Hlox.Runtime.Env where
 
 import Control.Monad.Except
-import Control.Monad.IO.Class
 import Data.Functor
 import Data.IORef
 import Data.Maybe (isJust)
 import Data.Text (Text)
+import Language.Hlox.Annotation
 import Language.Hlox.Runtime.Error
-import Language.Hlox.Syntax
 
 type Env a = IORef [(Text, IORef a)]
 

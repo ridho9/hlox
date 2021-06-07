@@ -7,6 +7,7 @@ import Control.Monad.Except (MonadError (throwError), runExceptT)
 import Control.Monad.IO.Class
 import Data.Functor
 import Data.Text qualified as T
+import Language.Hlox.Annotation
 import Language.Hlox.Runtime.Env
 import Language.Hlox.Runtime.Error
 import Language.Hlox.Runtime.Expr (evalExpr, valueTruthy)

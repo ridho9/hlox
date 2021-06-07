@@ -5,6 +5,7 @@ module Language.Hlox.Syntax where
 
 import Data.Text (Text)
 import Data.Text qualified as T
+import Language.Hlox.Annotation
 import Language.Hlox.Value (Value)
 import Text.Megaparsec (SourcePos (SourcePos), sourcePosPretty)
 
@@ -28,15 +29,6 @@ data Expression a
   | Logical a LogicalOp (Expression a) (Expression a)
   | Call a (Expression a) [Expression a]
   deriving (Show)
-
-newtype Annotation = Annotation {loc :: SourcePos}
-
-locString :: Annotation -> Text
-locString = T.pack . sourcePosPretty . loc
-
-class Annotated ast where
-  ann :: ast a -> a
-  amap :: (a -> a) -> ast a -> ast a
 
 data UnaryOp = Not | Negate deriving (Show, Eq)
 

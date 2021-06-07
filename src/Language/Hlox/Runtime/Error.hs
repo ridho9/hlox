@@ -9,7 +9,7 @@ import Data.Functor ((<&>))
 import Data.Text (Text)
 import Data.Text qualified as T
 import Data.Void (Void)
-import Language.Hlox.Syntax
+import Language.Hlox.Annotation
 import Text.Megaparsec
 
 type ParserError = ParseErrorBundle Text Void
