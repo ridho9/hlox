@@ -35,6 +35,7 @@ dependencies:
   - megaparsec
   - mtl
   - parser-combinators
+  - time
 
 library:
   source-dirs: src

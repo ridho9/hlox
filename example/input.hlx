@@ -1,13 +1,14 @@
+
+var start = clock();
+
 var a = 0;
 var temp;
-
-//call(1, 2, 3, 4)(2);
 
 for (var b = 1; a < 10000; b = temp + b) {
   print a;
   temp = a;
   a = b;
-  print "small than 5";
 }
 
-print 1+4/2-5 == -2;
+var end = clock();
+print end - start;

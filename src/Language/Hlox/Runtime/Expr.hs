@@ -38,6 +38,10 @@ evalExpr env (Logical _ Or leftE rightE) = do
   if valueTruthy leftV
     then return leftV
     else evalExpr env rightE
+evalExpr env (Call l callee args) = do
+  callee <- evalExpr env callee
+  args <- mapM (evalExpr env) args
+  call l env callee args
 
 binaryOpList loc =
   [ (Plus, binaryPlus loc)

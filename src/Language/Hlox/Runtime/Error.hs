@@ -42,6 +42,7 @@ showError (RuntimeError l err) = showPos l <> "Runtime error: " <> showRuntimeEr
 data RuntimeError
   = TypeMismatch Text Text
   | UnboundVar Text Text
+  | ArityMismatch Int Int
 
 instance Show RuntimeError where
   show = T.unpack . showRuntimeError
@@ -50,6 +51,7 @@ showRuntimeError =
   \case
     UnboundVar message varname -> message <> ": " <> varname
     TypeMismatch expected found -> "Invalid type: expected " <> expected <> ", found " <> found
+    ArityMismatch expected found -> "Invalid number of argument: expected " <> T.pack (show expected) <> ", found " <> T.pack (show found)
 
 trapError action = catchError action (show >>> T.pack >>> return)
 

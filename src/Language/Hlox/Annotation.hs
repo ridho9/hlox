@@ -4,7 +4,7 @@ import Data.Text
 import Data.Text qualified as T
 import Text.Megaparsec
 
-newtype Annotation = Annotation {loc :: SourcePos}
+newtype Annotation = Annotation {loc :: SourcePos} deriving (Eq)
 
 locString :: Annotation -> Text
 locString = T.pack . sourcePosPretty . loc
