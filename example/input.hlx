@@ -1,4 +1,4 @@
-
+print clock;
 var start = clock();
 
 var a = 0;

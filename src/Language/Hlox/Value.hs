@@ -27,6 +27,16 @@ call l env callee args =
       Callable f -> callCallable l env f args
       _ -> throwError $ RuntimeError l $ TypeMismatch "function" (showValue callee)
 
+instance Show Value where show = T.unpack . showValue
+
+showValue :: Value -> Text
+showValue (Number v) = T.pack $ show v
+showValue (String v) = T.pack $ show v
+showValue (Bool True) = "true"
+showValue (Bool False) = "false"
+showValue Nil = "nil"
+showValue (Callable c) = showCallable c
+
 data Callable
   = NativeFunc (Maybe Int) (Env Value -> [Value] -> IOThrowsError Value)
 
@@ -51,11 +61,11 @@ arity = \case
 instance Eq Callable where
   _ == _ = False
 
-instance Show Value where show = T.unpack . showValue
+instance Show Callable where show = T.unpack . showCallable
 
-showValue :: Value -> Text
-showValue (Number v) = T.pack $ show v
-showValue (String v) = T.pack $ show v
-showValue (Bool True) = "true"
-showValue (Bool False) = "false"
-showValue Nil = "nil"
+showCallable c = case c of
+  NativeFunc _ _ -> "<native>/" <> arr
+  where
+    arr = case arity c of
+      Just n -> T.pack $ show n
+      Nothing -> "-"
