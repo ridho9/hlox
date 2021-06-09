@@ -4,17 +4,33 @@
 
 module Main where
 
+import Control.Concurrent (threadDelay)
 import Control.Monad.Except (MonadIO (liftIO), runExceptT)
 import Data.Text qualified as T
+import Data.Time.Clock.POSIX
 import Language.Hlox.Interpreter
 import Language.Hlox.Runtime.Env
 import Language.Hlox.Runtime.Error
 import Language.Hlox.Syntax
-import Language.Hlox.Value (Value (String))
+import Language.Hlox.Value (Callable (NativeFunc), Value (Callable, Nil, Number, String))
 import System.Environment
 import System.IO (hFlush, stdout)
 
 tShow = T.pack . show
+
+defineGlobals :: Env Value -> IOThrowsError Value
+defineGlobals env = do
+  defineVar
+    env
+    "clock"
+    ( Callable $
+        NativeFunc
+          (Just 0)
+          ( \env args -> do
+              time <- liftIO getPOSIXTime
+              return $ Number (realToFrac time)
+          )
+    )
 
 main :: IO ()
 main = do
@@ -22,7 +38,7 @@ main = do
   env <- nullEnv
 
   -- definingGlobals
-  -- _ <- runExceptT $ defineVar env "name" (String "ridho")
+  runExceptT $ defineGlobals env
 
   res <- runExceptT $ case args of
     [] -> runRepl env
